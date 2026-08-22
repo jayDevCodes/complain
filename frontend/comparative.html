@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#020617">
+  <title>Comparative Intelligence - Government Work Investigation AI</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#020617;color:#e2e8f0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}.wrap{width:min(1040px,94%);margin:28px auto}.hero{padding:28px;border:1px solid #1e293b;border-radius:24px;background:linear-gradient(135deg,#0f172a,#111827 55%,#172554);box-shadow:0 24px 70px rgba(0,0,0,.35)}h1{margin:0;font-size:clamp(1.6rem,4vw,2.5rem)}p{color:#94a3b8}.panel{margin-top:18px;padding:20px;border:1px solid #1e293b;border-radius:20px;background:#0b1220}.row{display:grid;grid-template-columns:1fr auto;gap:12px}.row input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #334155;background:#020617;color:#fff;outline:none}.btn{border:0;border-radius:12px;padding:14px 18px;font-weight:800;cursor:pointer;background:#2563eb;color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}.status{margin-top:14px;padding:14px;border-radius:12px;background:#111827;color:#cbd5e1}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}.metric{padding:16px;border:1px solid #1e293b;border-radius:14px;background:#0f172a}.metric b{display:block;font-size:1.5rem;margin-top:5px}.source{padding:14px;border:1px solid #1e293b;border-radius:14px;background:#0f172a;margin-top:10px}.source a{color:#93c5fd;word-break:break-all}.json{white-space:pre-wrap;background:#020617;border:1px solid #1e293b;padding:16px;border-radius:14px;overflow:auto;font-size:12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hidden{display:none}.tag{display:inline-block;padding:4px 8px;border-radius:999px;background:#1e293b;color:#93c5fd;font-size:11px;font-weight:700}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <span class="tag">V4 / COMPARATIVE INTELLIGENCE</span>
+    <h1>Second-Pass Investigation</h1>
+    <p>Take an existing case dossier and research similar works, prior complaints, audit patterns, outcomes and procurement control-gap leads in parallel.</p>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <input id="caseId" placeholder="Enter investigation ID, e.g. 2026-08-22T...">
+      <button class="btn" id="runBtn">Run Comparative Research</button>
+    </div>
+    <div class="status" id="status">Case ID डालें और comparative research शुरू करें.</div>
+  </div>
+
+  <div class="panel hidden" id="metricsPanel">
+    <h3>Research Signal Board</h3>
+    <div class="cards" id="metrics"></div>
+    <div class="actions" id="actions"></div>
+  </div>
+
+  <div class="panel hidden" id="findingsPanel">
+    <h3>Pattern / Complaint / Outcome / Control-Gap Leads</h3>
+    <div id="findings"></div>
+  </div>
+
+  <div class="panel hidden" id="sourcesPanel">
+    <h3>Source Intelligence Board</h3>
+    <div id="sources"></div>
+  </div>
+
+  <div class="panel hidden" id="rawPanel">
+    <h3>Auditable JSON</h3>
+    <div class="json" id="raw"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const backend = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || !location.hostname) ? 'http://localhost:5000' : `http://${location.hostname}:5000`;
+const $ = id => document.getElementById(id);
+function setStatus(text, mode='normal'){ $('status').textContent=text; $('status').style.borderColor = mode==='error' ? '#7f1d1d' : mode==='success' ? '#14532d' : '#1e293b'; }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function showFinding(title, data, cls){ const d=document.createElement('div'); d.className='source'; d.innerHTML=`<span class="tag">${esc(cls)}</span><h4>${esc(title)}</h4><div>${esc(typeof data==='string'?data:JSON.stringify(data,null,2))}</div>`; $('findings').appendChild(d); }
+async function run(){
+  const id=$('caseId').value.trim(); if(!id){setStatus('Investigation ID required','error');return;}
+  $('runBtn').disabled=true; setStatus('Comparative agents are researching the case in parallel...');
+  try{
+    const r=await fetch(`${backend}/api/case/${encodeURIComponent(id)}/comparative-research`,{method:'POST',headers:{'Content-Type':'application/json'}});
+    const data=await r.json(); if(!r.ok) throw new Error(data.error||`HTTP ${r.status}`);
+    const s=data.signals||{};
+    $('metrics').innerHTML=[
+      ['Sources',s.totalSources],['Official leads',s.officialSources],['Complaint leads',s.complaintSources],['Audit leads',s.auditSources],['Court leads',s.courtSources],['Outcome leads',s.outcomeSources],['Control-gap leads',s.loopholeSources]
+    ].map(([k,v])=>`<div class="metric"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+    const rp=data.reports?.comparativePdf; $('actions').innerHTML=rp?`<a class="btn" href="${backend}${rp}" target="_blank" rel="noopener">Open Comparative PDF</a>`:'';
+    $('findings').innerHTML='';
+    for(const x of data.findings?.patterns||[]) showFinding('Similar-case pattern',x,'PATTERN');
+    for(const x of data.findings?.priorComplaints||[]) showFinding('Prior complaint lead',x,'COMPLAINT');
+    for(const x of data.findings?.outcomes||[]) showFinding('Comparable outcome',x,'OUTCOME');
+    for(const x of data.findings?.loopholes||[]) showFinding('Control-gap lead',x,'LOOPHOLE');
+    for(const x of data.findings?.contradictions||[]) showFinding('Model contradiction',x,'DISAGREEMENT');
+    $('sources').innerHTML=(data.sources||[]).slice(0,60).map(s=>`<div class="source"><b>[${esc(s.id)}] ${esc(s.title||'Untitled')}</b><div>${esc(s.publisher||'')}</div><div>${esc(s.excerpt||'')}</div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a></div>`).join('') || '<div class="source">No public sources found. Configure TAVILY_API_KEY or SERPER_API_KEY.</div>';
+    $('raw').textContent=JSON.stringify(data,null,2);
+    $('metricsPanel').classList.remove('hidden');$('findingsPanel').classList.remove('hidden');$('sourcesPanel').classList.remove('hidden');$('rawPanel').classList.remove('hidden');
+    setStatus('Comparative intelligence report generated successfully.','success');
+  }catch(e){console.error(e);setStatus(`Comparative research failed: ${e.message}`,'error');}
+  finally{$('runBtn').disabled=false;}
+}
+$('runBtn').addEventListener('click',run);
+$('caseId').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+</script>
+</body>
+</html>
