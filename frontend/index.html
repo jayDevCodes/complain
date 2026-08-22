@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="hi">
 <head>
@@ -8,6 +9,11 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="theme-color"
+        content="#0f172a"
+    >
+
     <title>Government Work Investigation AI</title>
 
     <style>
@@ -15,158 +21,467 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
             margin: 0;
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: #eef2f7;
-            color: #111827;
+            padding: 0;
+            min-height: 100%;
         }
 
-        .container {
-            width: min(900px, 94%);
-            margin: 30px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,.12);
+        body {
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff 0%,
+                    #f8fafc 45%,
+                    #e0f2fe 100%
+                );
+
+            color: #0f172a;
         }
 
-        h1 {
-            margin-top: 0;
+        .page {
+            width: min(960px, 94%);
+            margin: 24px auto 40px;
         }
 
-        .subtitle {
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            box-shadow:
+                0 20px 50px rgba(15, 23, 42, 0.12);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+        }
+
+        .header p {
+            margin: 8px 0 0;
             color: #64748b;
-            margin-bottom: 20px;
         }
 
-        video {
+        .content {
+            padding: 24px;
+        }
+
+        .camera-wrapper {
+            position: relative;
             width: 100%;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #020617;
             aspect-ratio: 16 / 9;
+        }
+
+        #camera {
+            width: 100%;
+            height: 100%;
+            display: block;
             object-fit: cover;
-            background: #111827;
-            border-radius: 16px;
+            background: #020617;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 14px;
+        }
+
+        .overlay-badge {
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.75);
+            color: white;
+            font-size: 13px;
+            backdrop-filter: blur(8px);
         }
 
         .controls {
-            margin-top: 20px;
-            display: flex;
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(190px, 1fr)
+                );
             gap: 12px;
-            flex-wrap: wrap;
+            margin-top: 18px;
         }
 
         button {
-            border: 0;
-            padding: 14px 22px;
-            border-radius: 12px;
-            background: #2563eb;
-            color: white;
-            font-size: 16px;
+            border: none;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
         }
 
         button:disabled {
-            opacity: .5;
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .status {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 10px;
-            background: #f1f5f9;
+        .primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .secondary {
+            background: #0f172a;
+            color: white;
         }
 
         .success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .status {
+            margin-top: 16px;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .status.success-state {
             background: #dcfce7;
             color: #166534;
         }
 
-        .error {
+        .status.error-state {
             background: #fee2e2;
             color: #991b1b;
         }
 
-        .loading {
+        .status.loading-state {
             background: #fef3c7;
             color: #92400e;
         }
 
-        .result {
+        .section {
             margin-top: 20px;
-            padding: 20px;
+            padding: 18px;
+            border-radius: 16px;
             background: #f8fafc;
-            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(180px, 1fr)
+                );
+            gap: 10px;
+        }
+
+        .item {
+            padding: 12px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+        }
+
+        .item .label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .item .value {
+            margin-top: 4px;
+            font-size: 14px;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .result {
             white-space: pre-wrap;
+            word-break: break-word;
+            background: #020617;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.6;
             overflow-x: auto;
         }
 
-        a {
-            color: #2563eb;
+        .links a {
+            display: inline-block;
+            margin: 5px 6px 5px 0;
+            padding: 9px 12px;
+            border-radius: 10px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
         }
 
-        .location {
-            background: #eff6ff;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
+        .footer {
+            margin-top: 18px;
+            text-align: center;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            .page {
+                width: 96%;
+                margin-top: 12px;
+            }
+
+            .header,
+            .content {
+                padding: 16px;
+            }
+
+            .camera-wrapper {
+                aspect-ratio: 9 / 16;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="page">
 
-    <h1>🇮🇳 Government Work Investigation AI</h1>
+    <div class="card">
 
-    <div class="subtitle">
-        Photo + GPS + Timestamp → Initial Investigation
+        <div class="header">
+            <h1>🇮🇳 Government Work Investigation AI</h1>
+
+            <p>
+                Camera + GPS + Timestamp →
+                Location Intelligence →
+                Preliminary Investigation
+            </p>
+        </div>
+
+        <div class="content">
+
+            <!-- CAMERA -->
+            <div class="camera-wrapper">
+
+                <video
+                    id="camera"
+                    autoplay
+                    muted
+                    playsinline
+                ></video>
+
+                <div class="camera-overlay">
+
+                    <div
+                        id="cameraState"
+                        class="overlay-badge"
+                    >
+                        Camera Off
+                    </div>
+
+                    <div
+                        id="gpsState"
+                        class="overlay-badge"
+                    >
+                        GPS Waiting
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- BUTTONS -->
+            <div class="controls">
+
+                <button
+                    id="startCameraBtn"
+                    class="primary"
+                >
+                    📷 Start Camera
+                </button>
+
+                <button
+                    id="getLocationBtn"
+                    class="secondary"
+                >
+                    📍 Get GPS
+                </button>
+
+                <button
+                    id="investigateBtn"
+                    class="success"
+                    disabled
+                >
+                    🔍 Capture + Investigate
+                </button>
+
+            </div>
+
+            <!-- STATUS -->
+            <div
+                id="status"
+                class="status"
+            >
+                System starting...
+            </div>
+
+            <!-- LOCATION -->
+            <div
+                id="locationSection"
+                class="section hidden"
+            >
+
+                <h3>
+                    📍 Current Field Location
+                </h3>
+
+                <div class="grid">
+
+                    <div class="item">
+                        <div class="label">
+                            Latitude
+                        </div>
+
+                        <div
+                            id="latitude"
+                            class="value"
+                        >
+                            -
+                        </div>
+                    </div>
+
+                    <div class="item">
+                        <div class="label">
+                            Longitude
+                        </div>
+
+                        <div
+                            id="longitude"
+                            class="value"
+                        >
+                            -
+                        </div>
+                    </div>
+
+                    <div class="item">
+                        <div class="label">
+                            Accuracy
+                        </div>
+
+                        <div
+                            id="accuracy"
+                            class="value"
+                        >
+                            -
+                        </div>
+                    </div>
+
+                    <div class="item">
+                        <div class="label">
+                            Capture Time
+                        </div>
+
+                        <div
+                            id="captureTime"
+                            class="value"
+                        >
+                            -
+                        </div>
+                    </div>
+
+                </div>
+
+                <div
+                    id="addressBox"
+                    style="
+                        margin-top: 12px;
+                        font-size: 14px;
+                        color: #475569;
+                    "
+                ></div>
+
+            </div>
+
+            <!-- MAP LINKS -->
+            <div
+                id="mapSection"
+                class="section hidden"
+            >
+
+                <h3>🗺️ Map</h3>
+
+                <div
+                    id="mapLinks"
+                    class="links"
+                ></div>
+
+            </div>
+
+            <!-- RESULT -->
+            <div
+                id="resultSection"
+                class="section hidden"
+            >
+
+                <h3>
+                    📄 Investigation Result
+                </h3>
+
+                <div
+                    id="result"
+                    class="result"
+                ></div>
+
+            </div>
+
+            <div class="footer">
+                Evidence should always be independently verified.
+            </div>
+
+        </div>
+
     </div>
-
-    <video
-        id="camera"
-        autoplay
-        muted
-        playsinline
-    ></video>
-
-    <div class="controls">
-
-        <button
-            id="startCamera"
-        >
-            📷 Start Camera
-        </button>
-
-        <button
-            id="investigate"
-            disabled
-        >
-            🔍 Capture + Investigate
-        </button>
-
-    </div>
-
-    <div
-        id="status"
-        class="status"
-    >
-        Backend checking...
-    </div>
-
-    <div
-        id="location"
-        class="location"
-        style="display:none;"
-    ></div>
-
-    <div
-        id="result"
-        class="result"
-        style="display:none;"
-    ></div>
 
 </div>
 
@@ -174,75 +489,143 @@
 
 "use strict";
 
-// --------------------------------------------------
-// Backend URL
-// --------------------------------------------------
+// ==================================================
+// CONFIGURATION
+// ==================================================
 
 function getBackendURL() {
 
-    const host =
+    const hostname =
         window.location.hostname;
 
+    // Local computer
     if (
-        host === "localhost" ||
-        host === "127.0.0.1"
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === ""
     ) {
         return "http://localhost:5000";
     }
 
-    return `http://${host}:5000`;
+    // Phone / another device on same Wi-Fi
+    return `http://${hostname}:5000`;
 }
 
 const BACKEND_URL =
     getBackendURL();
 
 console.log(
-    "Backend:",
+    "Backend URL:",
     BACKEND_URL
 );
 
-// --------------------------------------------------
-// DOM
-// --------------------------------------------------
 
-const video =
-    document.getElementById("camera");
+// ==================================================
+// DOM
+// ==================================================
+
+const camera =
+    document.getElementById(
+        "camera"
+    );
 
 const startCameraBtn =
-    document.getElementById("startCamera");
+    document.getElementById(
+        "startCameraBtn"
+    );
+
+const getLocationBtn =
+    document.getElementById(
+        "getLocationBtn"
+    );
 
 const investigateBtn =
-    document.getElementById("investigate");
+    document.getElementById(
+        "investigateBtn"
+    );
 
-const status =
-    document.getElementById("status");
+const statusBox =
+    document.getElementById(
+        "status"
+    );
 
-const result =
-    document.getElementById("result");
+const cameraState =
+    document.getElementById(
+        "cameraState"
+    );
 
-const locationBox =
-    document.getElementById("location");
+const gpsState =
+    document.getElementById(
+        "gpsState"
+    );
+
+const locationSection =
+    document.getElementById(
+        "locationSection"
+    );
+
+const mapSection =
+    document.getElementById(
+        "mapSection"
+    );
+
+const resultSection =
+    document.getElementById(
+        "resultSection"
+    );
+
+
+// ==================================================
+// STATE
+// ==================================================
 
 let cameraStream = null;
 
-// --------------------------------------------------
-// Status
-// --------------------------------------------------
+let currentPosition = null;
+
+let currentPhoto = null;
+
+let isBusy = false;
+
+
+// ==================================================
+// STATUS
+// ==================================================
 
 function setStatus(
     message,
     type = ""
 ) {
-    status.textContent =
+
+    statusBox.textContent =
         message;
 
-    status.className =
-        "status " + type;
+    statusBox.className =
+        "status";
+
+    if (type === "success") {
+        statusBox.classList.add(
+            "success-state"
+        );
+    }
+
+    if (type === "error") {
+        statusBox.classList.add(
+            "error-state"
+        );
+    }
+
+    if (type === "loading") {
+        statusBox.classList.add(
+            "loading-state"
+        );
+    }
 }
 
-// --------------------------------------------------
-// Backend health
-// --------------------------------------------------
+
+// ==================================================
+// BACKEND HEALTH
+// ==================================================
 
 async function checkBackend() {
 
@@ -259,15 +642,16 @@ async function checkBackend() {
                 {
                     method: "GET",
                     headers: {
-                        "Accept":
+                        Accept:
                             "application/json"
                     }
                 }
             );
 
         if (!response.ok) {
+
             throw new Error(
-                `HTTP ${response.status}`
+                `Backend HTTP ${response.status}`
             );
         }
 
@@ -275,7 +659,7 @@ async function checkBackend() {
             await response.json();
 
         console.log(
-            "Backend:",
+            "Backend health:",
             data
         );
 
@@ -287,119 +671,448 @@ async function checkBackend() {
     } catch (error) {
 
         console.error(
+            "Backend health error:",
             error
         );
 
         setStatus(
-            `❌ Backend connect nahi hua: ${BACKEND_URL}:5000`,
+            `❌ Backend connect nahi hua: ${BACKEND_URL}`,
             "error"
         );
     }
 }
 
-// --------------------------------------------------
-// Camera
-// --------------------------------------------------
+
+// ==================================================
+// CAMERA
+// ==================================================
 
 async function startCamera() {
 
     try {
 
+        setStatus(
+            "📷 Camera permission maangi ja rahi hai...",
+            "loading"
+        );
+
+        if (
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ) {
+
+            throw new Error(
+                "Camera API available nahi hai. HTTPS ya localhost use karein."
+            );
+        }
+
+        // Stop previous camera
+        if (cameraStream) {
+
+            cameraStream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
+        }
+
         cameraStream =
             await navigator.mediaDevices
                 .getUserMedia({
+
                     video: {
-                        facingMode:
-                            {
-                                ideal:
-                                    "environment"
-                            },
+                        facingMode: {
+                            ideal: "environment"
+                        },
+
                         width: {
                             ideal: 1920
                         },
+
                         height: {
                             ideal: 1080
                         }
                     },
+
                     audio: false
                 });
 
-        video.srcObject =
+        camera.srcObject =
             cameraStream;
 
-        investigateBtn.disabled =
-            false;
+        await camera.play();
+
+        cameraState.textContent =
+            "Camera ON";
 
         setStatus(
-            "📷 Camera ready",
+            "✅ Camera ready. Ab GPS le sakte ho.",
             "success"
         );
+
+        updateInvestigationButton();
 
     } catch (error) {
 
         console.error(
-            "Camera:",
+            "Camera error:",
             error
         );
 
+        cameraState.textContent =
+            "Camera Error";
+
         setStatus(
-            "❌ Camera permission nahi mili: " +
-            error.message,
+            `❌ Camera error: ${error.message}`,
             "error"
         );
     }
 }
 
-// --------------------------------------------------
-// GPS
-// --------------------------------------------------
+
+// ==================================================
+// GPS ERROR MESSAGE
+// ==================================================
+
+function getGPSErrorMessage(
+    error
+) {
+
+    if (!error) {
+
+        return "Unknown GPS error.";
+    }
+
+    switch (
+        error.code
+    ) {
+
+        case 1:
+
+            return (
+                "Location permission denied hai. " +
+                "Browser/site settings me Location → Allow karo."
+            );
+
+        case 2:
+
+            return (
+                "Position unavailable hai. " +
+                "Location Services/GPS on karo aur open area me dobara try karo."
+            );
+
+        case 3:
+
+            return (
+                "GPS timeout ho gaya. " +
+                "Thoda open area me jaakar dobara try karo."
+            );
+
+        default:
+
+            return (
+                error.message ||
+                "GPS location nahi mil saki."
+            );
+    }
+}
+
+
+// ==================================================
+// GET GPS
+// ==================================================
 
 function getGPS() {
 
     return new Promise(
-        (resolve, reject) => {
+        (
+            resolve,
+            reject
+        ) => {
 
             if (
                 !navigator.geolocation
             ) {
+
                 reject(
                     new Error(
-                        "GPS supported nahi hai."
+                        "Is device/browser me Geolocation supported nahi hai."
                     )
                 );
 
                 return;
             }
 
-            navigator.geolocation
-                .getCurrentPosition(
-                    resolve,
-                    reject,
-                    {
-                        enableHighAccuracy:
-                            true,
+            navigator.geolocation.getCurrentPosition(
 
-                        timeout:
-                            20000,
+                position => {
 
-                        maximumAge:
-                            0
-                    }
-                );
+                    console.log(
+                        "GPS position:",
+                        position
+                    );
+
+                    resolve(
+                        position
+                    );
+                },
+
+                error => {
+
+                    console.error(
+                        "GPS error:",
+                        {
+                            code:
+                                error.code,
+
+                            message:
+                                error.message
+                        }
+                    );
+
+                    reject(
+                        new Error(
+                            getGPSErrorMessage(
+                                error
+                            )
+                        )
+                    );
+                },
+
+                {
+                    // More reliable across laptops
+                    // and phones than forcing GPS only.
+                    enableHighAccuracy:
+                        false,
+
+                    timeout:
+                        30000,
+
+                    maximumAge:
+                        0
+                }
+            );
         }
     );
 }
 
-// --------------------------------------------------
-// Capture image
-// --------------------------------------------------
+
+// ==================================================
+// GET GPS WITH RETRY
+// ==================================================
+
+async function getLocationWithRetry() {
+
+    let lastError = null;
+
+    for (
+        let attempt = 1;
+        attempt <= 2;
+        attempt++
+    ) {
+
+        try {
+
+            setStatus(
+                `📍 GPS location li ja rahi hai... Attempt ${attempt}/2`,
+                "loading"
+            );
+
+            const position =
+                await getGPS();
+
+            return position;
+
+        } catch (error) {
+
+            lastError =
+                error;
+
+            console.warn(
+                `GPS attempt ${attempt} failed:`,
+                error
+            );
+
+            if (
+                attempt < 2
+            ) {
+
+                await new Promise(
+                    resolve =>
+                        setTimeout(
+                            resolve,
+                            1200
+                        )
+                );
+            }
+        }
+    }
+
+    throw lastError;
+}
+
+
+// ==================================================
+// DISPLAY GPS
+// ==================================================
+
+function displayLocation(
+    position,
+    timestamp
+) {
+
+    const coords =
+        position.coords;
+
+    const lat =
+        coords.latitude;
+
+    const lon =
+        coords.longitude;
+
+    const acc =
+        coords.accuracy;
+
+    document.getElementById(
+        "latitude"
+    ).textContent =
+        lat.toFixed(7);
+
+    document.getElementById(
+        "longitude"
+    ).textContent =
+        lon.toFixed(7);
+
+    document.getElementById(
+        "accuracy"
+    ).textContent =
+        `${Math.round(acc)} meters`;
+
+    document.getElementById(
+        "captureTime"
+    ).textContent =
+        new Date(
+            timestamp
+        ).toLocaleString(
+            "en-IN"
+        );
+
+    document.getElementById(
+        "addressBox"
+    ).innerHTML =
+        "Coordinates captured successfully.";
+
+    locationSection.classList.remove(
+        "hidden"
+    );
+
+    const googleMaps =
+        `https://www.google.com/maps?q=${lat},${lon}`;
+
+    const osm =
+        `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=18`;
+
+    document.getElementById(
+        "mapLinks"
+    ).innerHTML = `
+
+        <a
+            href="${googleMaps}"
+            target="_blank"
+            rel="noopener"
+        >
+            Google Maps
+        </a>
+
+        <a
+            href="${osm}"
+            target="_blank"
+            rel="noopener"
+        >
+            OpenStreetMap
+        </a>
+
+    `;
+
+    mapSection.classList.remove(
+        "hidden"
+    );
+
+    gpsState.textContent =
+        `GPS ±${Math.round(acc)}m`;
+}
+
+
+// ==================================================
+// MANUAL GET LOCATION
+// ==================================================
+
+async function getLocation() {
+
+    try {
+
+        getLocationBtn.disabled =
+            true;
+
+        const position =
+            await getLocationWithRetry();
+
+        const timestamp =
+            new Date()
+                .toISOString();
+
+        currentPosition =
+            position;
+
+        displayLocation(
+            position,
+            timestamp
+        );
+
+        setStatus(
+            `✅ GPS received. Accuracy ±${Math.round(position.coords.accuracy)}m`,
+            "success"
+        );
+
+        updateInvestigationButton();
+
+    } catch (error) {
+
+        console.error(
+            "Final GPS error:",
+            error
+        );
+
+        gpsState.textContent =
+            "GPS Error";
+
+        setStatus(
+            `❌ ${error.message}`,
+            "error"
+        );
+
+    } finally {
+
+        getLocationBtn.disabled =
+            false;
+    }
+}
+
+
+// ==================================================
+// PHOTO CAPTURE
+// ==================================================
 
 function capturePhoto() {
 
-    if (!video.videoWidth) {
+    if (
+        !camera.videoWidth ||
+        !camera.videoHeight
+    ) {
 
         throw new Error(
-            "Camera frame ready nahi hai."
+            "Camera frame abhi ready nahi hai."
         );
     }
 
@@ -409,18 +1122,18 @@ function capturePhoto() {
         );
 
     canvas.width =
-        video.videoWidth;
+        camera.videoWidth;
 
     canvas.height =
-        video.videoHeight;
+        camera.videoHeight;
 
-    const ctx =
+    const context =
         canvas.getContext(
             "2d"
         );
 
-    ctx.drawImage(
-        video,
+    context.drawImage(
+        camera,
         0,
         0,
         canvas.width,
@@ -433,61 +1146,84 @@ function capturePhoto() {
     );
 }
 
-// --------------------------------------------------
-// Investigation
-// --------------------------------------------------
+
+// ==================================================
+// UPDATE BUTTON
+// ==================================================
+
+function updateInvestigationButton() {
+
+    investigateBtn.disabled =
+        !cameraStream ||
+        !currentPosition ||
+        isBusy;
+}
+
+
+// ==================================================
+// INVESTIGATION
+// ==================================================
 
 async function investigate() {
 
-    investigateBtn.disabled =
+    if (isBusy) {
+        return;
+    }
+
+    isBusy =
         true;
 
-    result.style.display =
-        "none";
+    updateInvestigationButton();
 
     try {
 
-        setStatus(
-            "📍 GPS location li ja rahi hai...",
-            "loading"
-        );
+        // ------------------------------------------
+        // Ensure GPS
+        // ------------------------------------------
 
-        const position =
-            await getGPS();
+        if (!currentPosition) {
 
-        const latitude =
-            position.coords.latitude;
-
-        const longitude =
-            position.coords.longitude;
-
-        const accuracy =
-            position.coords.accuracy;
+            currentPosition =
+                await getLocationWithRetry();
+        }
 
         const timestamp =
-            new Date().toISOString();
+            new Date()
+                .toISOString();
+
+        // ------------------------------------------
+        // Capture photo
+        // ------------------------------------------
 
         setStatus(
-            "📸 Photo capture ho rahi hai...",
+            "📸 Evidence photo capture ho rahi hai...",
             "loading"
         );
 
-        const photo =
+        currentPhoto =
             capturePhoto();
 
-        locationBox.style.display =
-            "block";
+        // ------------------------------------------
+        // Display
+        // ------------------------------------------
 
-        locationBox.innerHTML = `
-            <b>GPS</b><br>
-            Latitude: ${latitude}<br>
-            Longitude: ${longitude}<br>
-            Accuracy: ${accuracy} meters<br>
-            Timestamp: ${timestamp}
-        `;
+        displayLocation(
+            currentPosition,
+            timestamp
+        );
+
+        const latitude =
+            currentPosition.coords.latitude;
+
+        const longitude =
+            currentPosition.coords.longitude;
+
+        // ------------------------------------------
+        // Backend
+        // ------------------------------------------
 
         setStatus(
-            "🤖 Backend investigation start...",
+            "🤖 Backend investigation start ho rahi hai...",
             "loading"
         );
 
@@ -495,22 +1231,29 @@ async function investigate() {
             await fetch(
                 `${BACKEND_URL}/api/start-investigation`,
                 {
-                    method: "POST",
+
+                    method:
+                        "POST",
 
                     headers: {
                         "Content-Type":
                             "application/json",
 
-                        "Accept":
+                        Accept:
                             "application/json"
                     },
 
                     body:
                         JSON.stringify({
+
                             latitude,
+
                             longitude,
+
                             timestamp,
-                            photo
+
+                            photo:
+                                currentPhoto
                         })
                 }
             );
@@ -521,89 +1264,43 @@ async function investigate() {
         let data;
 
         try {
+
             data =
                 JSON.parse(text);
-        } catch {
+
+        } catch (parseError) {
+
             throw new Error(
-                `Backend ne invalid response diya: ${text}`
+                `Backend invalid response de raha hai: ${text}`
             );
         }
 
-        if (!response.ok) {
+        if (
+            !response.ok
+        ) {
 
             throw new Error(
                 data.error ||
-                `HTTP ${response.status}`
+                `Backend HTTP ${response.status}`
             );
         }
 
-        console.log(
-            "Investigation result:",
-            data
+        // ------------------------------------------
+        // Show result
+        // ------------------------------------------
+
+        resultSection.classList.remove(
+            "hidden"
         );
 
-        result.style.display =
-            "block";
-
-        result.innerHTML = `
-            <h3>✅ Investigation Complete</h3>
-
-            <p>
-                ${escapeHTML(
-                    data.message || ""
-                )}
-            </p>
-
-            <h4>📍 Location</h4>
-
-            <pre>${escapeHTML(
-                JSON.stringify(
-                    data.location,
-                    null,
-                    2
-                )
-            )}</pre>
-
-            <h4>🗺️ Maps</h4>
-
-            <p>
-                <a
-                    href="${data.maps.googleMaps}"
-                    target="_blank"
-                >
-                    Open Google Maps
-                </a>
-            </p>
-
-            <p>
-                <a
-                    href="${data.maps.openStreetMap}"
-                    target="_blank"
-                >
-                    Open OpenStreetMap
-                </a>
-            </p>
-
-            <h4>📋 Research Plan</h4>
-
-            <pre>${escapeHTML(
-                JSON.stringify(
-                    data.researchPlan,
-                    null,
-                    2
-                )
-            )}</pre>
-
-            <h4>📄 Reports</h4>
-
-            <pre>${escapeHTML(
-                JSON.stringify(
-                    data.reports,
-                    null,
-                    2
-                )
-            )}</pre>
-        `;
+        document.getElementById(
+            "result"
+        ).textContent =
+            JSON.stringify(
+                data,
+                null,
+                2
+            );
 
         setStatus(
             "✅ Investigation complete",
@@ -613,66 +1310,47 @@ async function investigate() {
     } catch (error) {
 
         console.error(
-            "Investigation:",
+            "Investigation error:",
             error
         );
 
-        result.style.display =
-            "block";
+        resultSection.classList.remove(
+            "hidden"
+        );
 
-        result.innerHTML =
-            `<b>❌ Error</b>\n\n${escapeHTML(
-                error.message
-            )}`;
+        document.getElementById(
+            "result"
+        ).textContent =
+            "❌ Investigation failed\n\n" +
+            error.message;
 
         setStatus(
-            "❌ Investigation failed",
+            `❌ ${error.message}`,
             "error"
         );
 
     } finally {
 
-        investigateBtn.disabled =
+        isBusy =
             false;
+
+        updateInvestigationButton();
     }
 }
 
-// --------------------------------------------------
-// HTML escaping
-// --------------------------------------------------
 
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-}
-
-// --------------------------------------------------
-// Events
-// --------------------------------------------------
+// ==================================================
+// EVENTS
+// ==================================================
 
 startCameraBtn.addEventListener(
     "click",
     startCamera
+);
+
+getLocationBtn.addEventListener(
+    "click",
+    getLocation
 );
 
 investigateBtn.addEventListener(
@@ -680,15 +1358,17 @@ investigateBtn.addEventListener(
     investigate
 );
 
-// --------------------------------------------------
-// Initial backend check
-// --------------------------------------------------
+
+// ==================================================
+// INITIAL BACKEND CHECK
+// ==================================================
 
 checkBackend();
 
-// --------------------------------------------------
-// Stop camera
-// --------------------------------------------------
+
+// ==================================================
+// CAMERA CLEANUP
+// ==================================================
 
 window.addEventListener(
     "beforeunload",
@@ -710,3 +1390,4 @@ window.addEventListener(
 
 </body>
 </html>
+```
