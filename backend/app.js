@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { runInvestigation, REPORT_DIR, CASE_DIR } = require('./agents');
+const { runInvestigation, runComparativeInvestigation, loadCase, REPORT_DIR, CASE_DIR } = require('./agents');
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
@@ -13,8 +13,8 @@ app.use(express.json({ limit: '30mb' }));
 app.use('/reports', express.static(REPORT_DIR, { maxAge: '1h', index: false }));
 app.use('/cases', express.static(CASE_DIR, { maxAge: '1h', index: false }));
 
-app.get('/', (req, res) => res.json({ status: 'ok', service: 'Government Work Evidence Investigation AI', version: '3.0' }));
-app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'government-work-investigation-ai', version: '3.0', time: new Date().toISOString() }));
+app.get('/', (req, res) => res.json({ status: 'ok', service: 'Government Work Evidence Investigation AI', version: '4.0' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'government-work-investigation-ai', version: '4.0', time: new Date().toISOString() }));
 
 app.post('/api/start-investigation', async (req, res) => {
   try {
@@ -34,14 +34,41 @@ app.post('/api/start-investigation', async (req, res) => {
   }
 });
 
+app.post('/api/case/:id/comparative-research', async (req, res) => {
+  try {
+    const result = await runComparativeInvestigation(req.params.id);
+    result.reports = {
+      comparativePdf: `/reports/${path.basename(result.reports.comparativePdf)}`,
+      case: `/cases/${path.basename(result.reports.case)}`
+    };
+    res.json({ status: 'success', ...result });
+  } catch (error) {
+    console.error('Comparative research error:', error);
+    const status = /Case not found/i.test(error.message) ? 404 : 500;
+    res.status(status).json({ status: 'error', error: error.message || 'Comparative research failed' });
+  }
+});
+
 app.get('/api/case/:id', (req, res) => {
-  const file = path.join(CASE_DIR, `${path.basename(req.params.id)}.json`);
-  if (!require('fs').existsSync(file)) return res.status(404).json({ status: 'error', error: 'Case not found' });
-  res.sendFile(file);
+  try {
+    res.json(loadCase(req.params.id));
+  } catch (error) {
+    res.status(404).json({ status: 'error', error: 'Case not found' });
+  }
+});
+
+app.get('/api/case/:id/comparative-report', (req, res) => {
+  try {
+    const data = loadCase(req.params.id);
+    if (!data.comparativeResearch) return res.status(404).json({ status: 'error', error: 'Comparative research has not been run for this case.' });
+    res.json({ status: 'success', investigationId: req.params.id, version: data.version, comparativeResearch: data.comparativeResearch, report: data.reports?.comparativePdf || null });
+  } catch (error) {
+    res.status(404).json({ status: 'error', error: 'Case not found' });
+  }
 });
 
 app.use((req, res) => res.status(404).json({ status: 'error', error: `Route not found: ${req.method} ${req.originalUrl}` }));
 
-const server = app.listen(PORT, HOST, () => console.log(`Government Work Investigation AI listening on ${PORT}`));
+const server = app.listen(PORT, HOST, () => console.log(`Government Work Investigation AI v4 listening on ${PORT}`));
 server.on('error', error => console.error('Server error:', error));
 process.on('SIGINT', () => server.close(() => process.exit(0)));
