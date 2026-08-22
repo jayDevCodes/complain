@@ -1,35 +1,20 @@
 {
-  "name": "jay",
-  "version": "1.0.0",
-  "description": "AI Anti-Corruption Investigation System",
-  "homepage": "https://github.com/jayDevCodes/complain#readme",
-  "bugs": {
-    "url": "https://github.com/jayDevCodes/complain/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jayDevCodes/complain.git"
-  },
-  "license": "ISC",
-  "author": "jay",
-  "type": "commonjs",
+  "name": "government-work-investigation-ai",
+  "version": "2.0.0",
+  "description": "AI assisted government work field investigation system",
   "main": "app.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon app.js"
   },
-  "keywords": [],
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "axios": "^1.19.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "googleapis": "^176.0.0",
-    "multer": "^2.2.0",
-    "node-geocoder": "^4.4.1",
-    "nodemon": "^3.1.14",
-    "pdfkit": "^0.19.1"
-  }
+    "pdfkit": "^0.19.1",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {}
 }

@@ -1,656 +1,712 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🇮🇳 भ्रष्टाचार विरोधी AI सिस्टम</title>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Government Work Investigation AI</title>
+
     <style>
-        /* ----- Reset & Base ----- */
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-            background: linear-gradient(145deg, #f0f4f8 0%, #e2e8f0 100%);
+            margin: 0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #eef2f7;
+            color: #111827;
         }
 
         .container {
-            max-width: 780px;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 40px;
-            padding: 30px 28px 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.2s ease;
-        }
-
-        /* ----- Header ----- */
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .header .icon {
-            font-size: 2.6rem;
-            background: #1e293b;
-            color: #facc15;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: min(900px, 94%);
+            margin: 30px auto;
+            background: white;
+            padding: 25px;
             border-radius: 20px;
-            box-shadow: 0 8px 16px -6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 40px rgba(0,0,0,.12);
         }
 
-        .header h1 {
-            font-size: 1.9rem;
-            font-weight: 700;
-            color: #0f172a;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-        }
-
-        .header h1 small {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 400;
-            color: #475569;
-            margin-top: 2px;
-            letter-spacing: 0.3px;
-        }
-
-        /* ----- Video ----- */
-        .video-wrapper {
-            position: relative;
-            border-radius: 28px;
-            overflow: hidden;
-            background: #0b1120;
-            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.6), 0 12px 24px -8px rgba(0, 0, 0, 0.3);
-            margin-bottom: 22px;
-            aspect-ratio: 16 / 9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .video-wrapper video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-            background: #0b1120;
-        }
-
-        .video-placeholder {
-            color: #94a3b8;
-            font-size: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .video-placeholder i {
-            font-size: 3.6rem;
-            color: #475569;
-        }
-
-        /* ----- Controls ----- */
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-bottom: 24px;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 14px 28px;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 60px;
-            background: #1e293b;
-            color: #f8fafc;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 8px 18px -6px rgba(15, 23, 42, 0.25);
-            flex: 1 1 auto;
-            min-width: 180px;
-        }
-
-        .btn i {
-            font-size: 1.2rem;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            background: #0f172a;
-            box-shadow: 0 14px 24px -8px rgba(15, 23, 42, 0.35);
-        }
-
-        .btn:active {
-            transform: translateY(0px);
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #15803d;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            pointer-events: none;
-            filter: grayscale(0.3);
-            transform: none !important;
-        }
-
-        .status-badge {
-            font-size: 0.85rem;
-            color: #475569;
-            background: #e2e8f0;
-            padding: 6px 16px;
-            border-radius: 40px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
-        }
-
-        .status-badge .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .dot.green {
-            background: #22c55e;
-        }
-        .dot.yellow {
-            background: #eab308;
-        }
-        .dot.red {
-            background: #ef4444;
-        }
-
-        /* ----- Result Box ----- */
-        .result-box {
-            background: #f8fafc;
-            border-radius: 24px;
-            padding: 20px 24px;
-            border: 1px solid #e2e8f0;
-            min-height: 140px;
-            max-height: 520px;
-            overflow-y: auto;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #0f172a;
-            transition: all 0.2s ease;
-            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.02);
-        }
-
-        .result-box::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .result-box::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 12px;
-        }
-
-        .result-box::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 12px;
-        }
-
-        .result-placeholder {
-            color: #94a3b8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            height: 100%;
-            min-height: 100px;
-            text-align: center;
-        }
-
-        .result-placeholder i {
-            font-size: 2.4rem;
-            color: #cbd5e1;
-        }
-
-        .result-box .section-title {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #0f172a;
-            margin-top: 16px;
-            margin-bottom: 4px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 4px;
-        }
-
-        .result-box .section-title:first-of-type {
+        h1 {
             margin-top: 0;
         }
 
-        .result-box .drive-link {
-            display: block;
-            color: #2563eb;
-            word-break: break-all;
-            padding: 2px 0;
-        }
-
-        .result-box .drive-link i {
-            margin-right: 6px;
-            color: #16a34a;
-        }
-
-        .result-box .rti-draft {
-            background: #f1f5f9;
-            padding: 12px 16px;
-            border-radius: 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            white-space: pre-wrap;
-            word-break: break-word;
-            border-left: 4px solid #2563eb;
-            margin: 8px 0;
-        }
-
-        .error-message {
-            color: #dc2626;
-            background: #fee2e2;
-            padding: 12px 16px;
-            border-radius: 16px;
-            border-left: 4px solid #dc2626;
-        }
-
-        /* ----- Footer ----- */
-        .footer {
-            margin-top: 22px;
-            text-align: center;
-            font-size: 0.75rem;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 18px;
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .footer a {
-            color: #475569;
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            color: #0f172a;
-            text-decoration: underline;
-        }
-
-        /* ----- Responsive ----- */
-        @media (max-width: 550px) {
-            .container {
-                padding: 20px 16px 28px;
-            }
-
-            .header h1 {
-                font-size: 1.4rem;
-            }
-
-            .header .icon {
-                width: 48px;
-                height: 48px;
-                font-size: 2rem;
-            }
-
-            .btn {
-                padding: 12px 18px;
-                font-size: 0.9rem;
-                min-width: 140px;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .status-badge {
-                align-self: flex-start;
-            }
-        }
-
-        /* ----- Utility ----- */
-        .mt-2 {
-            margin-top: 8px;
-        }
-        .mb-1 {
-            margin-bottom: 4px;
-        }
-        .flex {
-            display: flex;
-        }
-        .gap-2 {
-            gap: 8px;
-        }
-        .items-center {
-            align-items: center;
-        }
-        .text-sm {
-            font-size: 0.85rem;
-        }
-        .text-muted {
+        .subtitle {
             color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            background: #111827;
+            border-radius: 16px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: 0;
+            padding: 14px 22px;
+            border-radius: 12px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            background: #f1f5f9;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 15px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        a {
+            color: #2563eb;
+        }
+
+        .location {
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
         }
     </style>
 </head>
+
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <!-- HEADER -->
-        <div class="header">
-            <div class="icon">
-                <i class="fas fa-balance-scale"></i>
-            </div>
-            <h1>
-                भ्रष्टाचार विरोधी AI
-                <small>सरकारी टेंडर जांच प्रणाली</small>
-            </h1>
-        </div>
+    <h1>🇮🇳 Government Work Investigation AI</h1>
 
-        <!-- VIDEO -->
-        <div class="video-wrapper">
-            <video id="video" autoplay muted playsinline></video>
-            <div id="videoPlaceholder" class="video-placeholder" style="position:absolute; inset:0; pointer-events:none; background:rgba(11,17,32,0.7); backdrop-filter:blur(4px);">
-                <i class="fas fa-video"></i>
-                <span>कैमरा शुरू हो रहा है…</span>
-                <span style="font-size:0.8rem; color:#64748b;">कृपया अनुमति दें</span>
-            </div>
-        </div>
-
-        <!-- CONTROLS -->
-        <div class="controls">
-            <button id="captureBtn" class="btn btn-primary">
-                <i class="fas fa-camera"></i> GPS + जाँच शुरू करें
-            </button>
-            <span id="statusBadge" class="status-badge">
-                <span class="dot yellow" id="statusDot"></span>
-                <span id="statusText">तैयार</span>
-            </span>
-        </div>
-
-        <!-- RESULT -->
-        <div id="resultBox" class="result-box">
-            <div class="result-placeholder" id="placeholder">
-                <i class="fas fa-search"></i>
-                <span>जाँच के नतीजे यहाँ दिखेंगे</span>
-                <span style="font-size:0.8rem; color:#94a3b8;">कैमरा और GPS सक्षम होना चाहिए</span>
-            </div>
-            <div id="resultContent" style="display:none;"></div>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="footer">
-            <span><i class="fas fa-shield-alt" style="color:#2563eb;"></i> डेटा स्थानीय रूप से संसाधित होता है</span>
-            <span>
-                <i class="fas fa-code"></i> <a href="https://github.com/jayDevCodes/complain" target="_blank">GitHub</a>
-                &middot; v2.0
-            </span>
-        </div>
+    <div class="subtitle">
+        Photo + GPS + Timestamp → Initial Investigation
     </div>
 
-    <script>
-        (function() {
-            "use strict";
+    <video
+        id="camera"
+        autoplay
+        muted
+        playsinline
+    ></video>
 
-            // ---------- DOM refs ----------
-            const video = document.getElementById('video');
-            const placeholder = document.getElementById('videoPlaceholder');
-            const captureBtn = document.getElementById('captureBtn');
-            const statusBadge = document.getElementById('statusBadge');
-            const statusDot = document.getElementById('statusDot');
-            const statusText = document.getElementById('statusText');
-            const resultBox = document.getElementById('resultBox');
-            const placeholderEl = document.getElementById('placeholder');
-            const resultContent = document.getElementById('resultContent');
+    <div class="controls">
 
-            // ---------- State ----------
-            let isInvestigating = false;
+        <button
+            id="startCamera"
+        >
+            📷 Start Camera
+        </button>
 
-            // ---------- Helpers ----------
-            function setStatus(text, type) {
-                statusText.textContent = text;
-                statusDot.className = 'dot';
-                if (type === 'ready') {
-                    statusDot.classList.add('green');
-                    statusBadge.style.background = '#dcfce7';
-                } else if (type === 'loading') {
-                    statusDot.classList.add('yellow');
-                    statusBadge.style.background = '#fef9c3';
-                } else if (type === 'error') {
-                    statusDot.classList.add('red');
-                    statusBadge.style.background = '#fee2e2';
-                } else {
-                    statusDot.classList.add('green');
-                    statusBadge.style.background = '#e2e8f0';
+        <button
+            id="investigate"
+            disabled
+        >
+            🔍 Capture + Investigate
+        </button>
+
+    </div>
+
+    <div
+        id="status"
+        class="status"
+    >
+        Backend checking...
+    </div>
+
+    <div
+        id="location"
+        class="location"
+        style="display:none;"
+    ></div>
+
+    <div
+        id="result"
+        class="result"
+        style="display:none;"
+    ></div>
+
+</div>
+
+<script>
+
+"use strict";
+
+// --------------------------------------------------
+// Backend URL
+// --------------------------------------------------
+
+function getBackendURL() {
+
+    const host =
+        window.location.hostname;
+
+    if (
+        host === "localhost" ||
+        host === "127.0.0.1"
+    ) {
+        return "http://localhost:5000";
+    }
+
+    return `http://${host}:5000`;
+}
+
+const BACKEND_URL =
+    getBackendURL();
+
+console.log(
+    "Backend:",
+    BACKEND_URL
+);
+
+// --------------------------------------------------
+// DOM
+// --------------------------------------------------
+
+const video =
+    document.getElementById("camera");
+
+const startCameraBtn =
+    document.getElementById("startCamera");
+
+const investigateBtn =
+    document.getElementById("investigate");
+
+const status =
+    document.getElementById("status");
+
+const result =
+    document.getElementById("result");
+
+const locationBox =
+    document.getElementById("location");
+
+let cameraStream = null;
+
+// --------------------------------------------------
+// Status
+// --------------------------------------------------
+
+function setStatus(
+    message,
+    type = ""
+) {
+    status.textContent =
+        message;
+
+    status.className =
+        "status " + type;
+}
+
+// --------------------------------------------------
+// Backend health
+// --------------------------------------------------
+
+async function checkBackend() {
+
+    try {
+
+        setStatus(
+            "Backend check ho raha hai...",
+            "loading"
+        );
+
+        const response =
+            await fetch(
+                `${BACKEND_URL}/api/health`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+        const data =
+            await response.json();
+
+        console.log(
+            "Backend:",
+            data
+        );
+
+        setStatus(
+            "✅ Backend connected",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        setStatus(
+            `❌ Backend connect nahi hua: ${BACKEND_URL}:5000`,
+            "error"
+        );
+    }
+}
+
+// --------------------------------------------------
+// Camera
+// --------------------------------------------------
+
+async function startCamera() {
+
+    try {
+
+        cameraStream =
+            await navigator.mediaDevices
+                .getUserMedia({
+                    video: {
+                        facingMode:
+                            {
+                                ideal:
+                                    "environment"
+                            },
+                        width: {
+                            ideal: 1920
+                        },
+                        height: {
+                            ideal: 1080
+                        }
+                    },
+                    audio: false
+                });
+
+        video.srcObject =
+            cameraStream;
+
+        investigateBtn.disabled =
+            false;
+
+        setStatus(
+            "📷 Camera ready",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Camera:",
+            error
+        );
+
+        setStatus(
+            "❌ Camera permission nahi mili: " +
+            error.message,
+            "error"
+        );
+    }
+}
+
+// --------------------------------------------------
+// GPS
+// --------------------------------------------------
+
+function getGPS() {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            if (
+                !navigator.geolocation
+            ) {
+                reject(
+                    new Error(
+                        "GPS supported nahi hai."
+                    )
+                );
+
+                return;
             }
 
-            function showResult(html) {
-                placeholderEl.style.display = 'none';
-                resultContent.style.display = 'block';
-                resultContent.innerHTML = html;
-            }
+            navigator.geolocation
+                .getCurrentPosition(
+                    resolve,
+                    reject,
+                    {
+                        enableHighAccuracy:
+                            true,
 
-            function showPlaceholder() {
-                placeholderEl.style.display = 'flex';
-                resultContent.style.display = 'none';
-                resultContent.innerHTML = '';
-            }
+                        timeout:
+                            20000,
 
-            function formatDriveLinks(links) {
-                if (!links || links.length === 0) return '<span class="text-muted">कोई लिंक नहीं</span>';
-                return links.map(link =>
-                    `<span class="drive-link"><i class="fas fa-file-pdf"></i> <a href="${link}" target="_blank">${link}</a></span>`
-                ).join('');
-            }
-
-            function formatLocation(loc) {
-                if (!loc) return 'N/A';
-                const parts = [];
-                if (loc.display_name) parts.push(`📍 ${loc.display_name}`);
-                if (loc.city) parts.push(`🏙️ ${loc.city}`);
-                if (loc.district) parts.push(`🗺️ ${loc.district}`);
-                if (loc.state) parts.push(`🏛️ ${loc.state}`);
-                if (loc.pincode) parts.push(`📮 ${loc.pincode}`);
-                if (loc.latitude && loc.longitude) parts.push(`🌐 ${loc.latitude}, ${loc.longitude}`);
-                return parts.length ? parts.join('<br>') : JSON.stringify(loc, null, 2);
-            }
-
-            // ---------- Camera ----------
-            async function startCamera() {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment', width: { ideal: 640 } }
-                    });
-                    video.srcObject = stream;
-                    if (placeholder) placeholder.style.display = 'none';
-                    setStatus('कैमरा ऑन', 'ready');
-                } catch (err) {
-                    console.warn('Camera error:', err);
-                    if (placeholder) {
-                        placeholder.innerHTML = `
-                            <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>
-                            <span>कैमरा एक्सेस नहीं मिला</span>
-                            <span style="font-size:0.8rem; color:#94a3b8;">${err.message}</span>
-                        `;
-                        placeholder.style.display = 'flex';
+                        maximumAge:
+                            0
                     }
-                    setStatus('कैमरा बंद', 'error');
+                );
+        }
+    );
+}
+
+// --------------------------------------------------
+// Capture image
+// --------------------------------------------------
+
+function capturePhoto() {
+
+    if (!video.videoWidth) {
+
+        throw new Error(
+            "Camera frame ready nahi hai."
+        );
+    }
+
+    const canvas =
+        document.createElement(
+            "canvas"
+        );
+
+    canvas.width =
+        video.videoWidth;
+
+    canvas.height =
+        video.videoHeight;
+
+    const ctx =
+        canvas.getContext(
+            "2d"
+        );
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    return canvas.toDataURL(
+        "image/jpeg",
+        0.85
+    );
+}
+
+// --------------------------------------------------
+// Investigation
+// --------------------------------------------------
+
+async function investigate() {
+
+    investigateBtn.disabled =
+        true;
+
+    result.style.display =
+        "none";
+
+    try {
+
+        setStatus(
+            "📍 GPS location li ja rahi hai...",
+            "loading"
+        );
+
+        const position =
+            await getGPS();
+
+        const latitude =
+            position.coords.latitude;
+
+        const longitude =
+            position.coords.longitude;
+
+        const accuracy =
+            position.coords.accuracy;
+
+        const timestamp =
+            new Date().toISOString();
+
+        setStatus(
+            "📸 Photo capture ho rahi hai...",
+            "loading"
+        );
+
+        const photo =
+            capturePhoto();
+
+        locationBox.style.display =
+            "block";
+
+        locationBox.innerHTML = `
+            <b>GPS</b><br>
+            Latitude: ${latitude}<br>
+            Longitude: ${longitude}<br>
+            Accuracy: ${accuracy} meters<br>
+            Timestamp: ${timestamp}
+        `;
+
+        setStatus(
+            "🤖 Backend investigation start...",
+            "loading"
+        );
+
+        const response =
+            await fetch(
+                `${BACKEND_URL}/api/start-investigation`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+                            latitude,
+                            longitude,
+                            timestamp,
+                            photo
+                        })
                 }
-            }
+            );
 
-            // ---------- Investigation ----------
-            async function startInvestigation() {
-                if (isInvestigating) return;
+        const text =
+            await response.text();
 
-                // GPS check
-                if (!navigator.geolocation) {
-                    alert('आपका ब्राउज़र GPS सपोर्ट नहीं करता।');
-                    return;
-                }
+        let data;
 
-                isInvestigating = true;
-                captureBtn.disabled = true;
-                captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> जाँच हो रही…';
-                setStatus('GPS लिया जा रहा…', 'loading');
-                showPlaceholder();
+        try {
+            data =
+                JSON.parse(text);
+        } catch {
+            throw new Error(
+                `Backend ne invalid response diya: ${text}`
+            );
+        }
 
-                try {
-                    // 1. Get GPS
-                    const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: true,
-                            timeout: 15000,
-                            maximumAge: 0
-                        });
-                    });
+        if (!response.ok) {
 
-                    const lat = pos.coords.latitude;
-                    const lon = pos.coords.longitude;
-                    const timestamp = new Date().toISOString();
+            throw new Error(
+                data.error ||
+                `HTTP ${response.status}`
+            );
+        }
 
-                    setStatus('AI विश्लेषण…', 'loading');
-                    captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI सोच रहा…';
+        console.log(
+            "Investigation result:",
+            data
+        );
 
-                    // 2. Call backend (PORT 501)
-                    const BACKEND_URL = 'http://localhost:501/api/start-investigation';
-                    const response = await fetch(BACKEND_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ latitude: lat, longitude: lon, timestamp })
-                    });
+        result.style.display =
+            "block";
 
-                    if (!response.ok) {
-                        const errText = await response.text();
-                        throw new Error(`सर्वर एरर (${response.status}): ${errText}`);
-                    }
+        result.innerHTML = `
+            <h3>✅ Investigation Complete</h3>
 
-                    const data = await response.json();
+            <p>
+                ${escapeHTML(
+                    data.message || ""
+                )}
+            </p>
 
-                    // 3. Render result
-                    let html = '';
+            <h4>📍 Location</h4>
 
-                    // Location
-                    html += `<div class="section-title"><i class="fas fa-map-pin" style="color:#2563eb;"></i> स्थान</div>`;
-                    html += `<div style="margin-bottom:12px;">${formatLocation(data.location)}</div>`;
+            <pre>${escapeHTML(
+                JSON.stringify(
+                    data.location,
+                    null,
+                    2
+                )
+            )}</pre>
 
-                    // AI Summary
-                    if (data.aiSummary) {
-                        html += `<div class="section-title"><i class="fas fa-brain" style="color:#7c3aed;"></i> AI विश्लेषण</div>`;
-                        html += `<div style="margin-bottom:12px; background:#f1f5f9; padding:10px 14px; border-radius:16px;">${data.aiSummary}</div>`;
-                    }
+            <h4>🗺️ Maps</h4>
 
-                    // Drive links
-                    if (data.driveLinks && data.driveLinks.length) {
-                        html += `<div class="section-title"><i class="fas fa-cloud-upload-alt" style="color:#16a34a;"></i> PDF रिपोर्ट</div>`;
-                        html += `<div style="margin-bottom:12px;">${formatDriveLinks(data.driveLinks)}</div>`;
-                    } else {
-                        html +=
-                            `<div class="section-title"><i class="fas fa-file-pdf" style="color:#f59e0b;"></i> PDF रिपोर्ट</div>`;
-                        html +=
-                            `<div class="text-muted text-sm">कोई Drive लिंक नहीं (स्थानीय PDF जनरेट हुई)</div>`;
-                    }
+            <p>
+                <a
+                    href="${data.maps.googleMaps}"
+                    target="_blank"
+                >
+                    Open Google Maps
+                </a>
+            </p>
 
-                    // RTI Draft
-                    if (data.rtiDraft) {
-                        html += `<div class="section-title"><i class="fas fa-gavel" style="color:#b45309;"></i> RTI ड्राफ्ट</div>`;
-                        html += `<div class="rti-draft">${data.rtiDraft}</div>`;
-                    }
+            <p>
+                <a
+                    href="${data.maps.openStreetMap}"
+                    target="_blank"
+                >
+                    Open OpenStreetMap
+                </a>
+            </p>
 
-                    showResult(html);
-                    setStatus('जाँच पूरी ✅', 'ready');
+            <h4>📋 Research Plan</h4>
 
-                } catch (err) {
-                    console.error('Investigation error:', err);
-                    let errorMsg = err.message || 'अज्ञात त्रुटि';
-                    if (errorMsg.includes('Failed to fetch')) {
-                        errorMsg =
-                        'बैकएंड सर्वर कनेक्ट नहीं हो पाया। क्या सर्वर चल रहा है? (पोर्ट 501)';
-                    }
-                    showResult(`
-                        <div class="error-message">
-                            <i class="fas fa-exclamation-circle"></i> ${errorMsg}
-                        </div>
-                        <div class="text-sm text-muted mt-2">
-                            <i class="fas fa-lightbulb"></i> सुझाव: सर्वर चालू है? <code>node app.js</code> चलाएँ और पोर्ट 501 चेक करें।
-                        </div>
-                    `);
-                    setStatus('एरर ❌', 'error');
-                } finally {
-                    isInvestigating = false;
-                    captureBtn.disabled = false;
-                    captureBtn.innerHTML = '<i class="fas fa-camera"></i> GPS + जाँच शुरू करें';
-                }
-            }
+            <pre>${escapeHTML(
+                JSON.stringify(
+                    data.researchPlan,
+                    null,
+                    2
+                )
+            )}</pre>
 
-            // ---------- Event binding ----------
-            captureBtn.addEventListener('click', startInvestigation);
+            <h4>📄 Reports</h4>
 
-            // ---------- Init ----------
-            startCamera();
-            setStatus('तैयार', 'ready');
+            <pre>${escapeHTML(
+                JSON.stringify(
+                    data.reports,
+                    null,
+                    2
+                )
+            )}</pre>
+        `;
 
-            // Handle page unload – stop camera
-            window.addEventListener('beforeunload', () => {
-                if (video.srcObject) {
-                    video.srcObject.getTracks().forEach(t => t.stop());
-                }
-            });
+        setStatus(
+            "✅ Investigation complete",
+            "success"
+        );
 
-        })();
-    </script>
+    } catch (error) {
+
+        console.error(
+            "Investigation:",
+            error
+        );
+
+        result.style.display =
+            "block";
+
+        result.innerHTML =
+            `<b>❌ Error</b>\n\n${escapeHTML(
+                error.message
+            )}`;
+
+        setStatus(
+            "❌ Investigation failed",
+            "error"
+        );
+
+    } finally {
+
+        investigateBtn.disabled =
+            false;
+    }
+}
+
+// --------------------------------------------------
+// HTML escaping
+// --------------------------------------------------
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+// --------------------------------------------------
+// Events
+// --------------------------------------------------
+
+startCameraBtn.addEventListener(
+    "click",
+    startCamera
+);
+
+investigateBtn.addEventListener(
+    "click",
+    investigate
+);
+
+// --------------------------------------------------
+// Initial backend check
+// --------------------------------------------------
+
+checkBackend();
+
+// --------------------------------------------------
+// Stop camera
+// --------------------------------------------------
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        if (cameraStream) {
+
+            cameraStream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
+        }
+    }
+);
+
+</script>
 
 </body>
 </html>

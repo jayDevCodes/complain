@@ -1,332 +1,492 @@
-// agents.js – Complete AI Logic for Corruption Investigation System
-require('dotenv').config();
+require("dotenv").config();
 
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const NodeGeocoder = require('node-geocoder');
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
-const { google } = require('googleapis');
+const fs = require("fs");
+const path = require("path");
+const PDFDocument = require("pdfkit");
 
-// ---------- 1. Gemini AI Setup ----------
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+// --------------------------------------------------
+// Configuration
+// --------------------------------------------------
 
-async function callGemini(prompt) {
-  try {
-    const result = await model.generateContent(prompt);
-    return result.response.text();
-  } catch (error) {
-    console.error('❌ Gemini API error:', error.message);
-    return 'ERROR: ' + error.message;
-  }
+const REPORT_DIR = path.join(__dirname, "reports");
+
+if (!fs.existsSync(REPORT_DIR)) {
+  fs.mkdirSync(REPORT_DIR, { recursive: true });
 }
 
-// ---------- 2. Geocoding (OpenStreetMap – Free) ----------
-const geocoder = NodeGeocoder({
-  provider: 'openstreetmap',
-  language: 'en',
-});
+// --------------------------------------------------
+// Reverse Geocoding
+// --------------------------------------------------
 
-async function getLocationDetails(lat, lon) {
-  try {
-    const res = await geocoder.reverse({ lat, lon });
-    if (res && res.length > 0) {
-      const data = res[0];
-      return {
-        latitude: lat,
-        longitude: lon,
-        display_name: data.formattedAddress || data.address || 'Unknown',
-        city: data.city || data.town || data.village || null,
-        district: data.stateDistrict || data.district || null,
-        state: data.state || null,
-        pincode: data.postalCode || null,
-        country: data.country || 'India',
-      };
+async function getLocationDetails(latitude, longitude) {
+  const url =
+    `https://nominatim.openstreetmap.org/reverse` +
+    `?format=jsonv2` +
+    `&lat=${encodeURIComponent(latitude)}` +
+    `&lon=${encodeURIComponent(longitude)}` +
+    `&zoom=18` +
+    `&addressdetails=1`;
+
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "CorruptionAIResearchSystem/1.0 contact@example.com",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Location service failed: HTTP ${response.status}`
+    );
+  }
+
+  const data = await response.json();
+
+  const address = data.address || {};
+
+  return {
+    latitude,
+    longitude,
+
+    display_name: data.display_name || null,
+
+    village:
+      address.village ||
+      address.hamlet ||
+      address.suburb ||
+      null,
+
+    town:
+      address.town ||
+      address.city ||
+      address.municipality ||
+      null,
+
+    district:
+      address.county ||
+      address.state_district ||
+      null,
+
+    state: address.state || null,
+
+    country: address.country || null,
+
+    pincode:
+      address.postcode ||
+      null,
+
+    raw: data,
+  };
+}
+
+// --------------------------------------------------
+// Map URL
+// --------------------------------------------------
+
+function createMapLinks(latitude, longitude) {
+  return {
+    googleMaps:
+      `https://www.google.com/maps?q=${latitude},${longitude}`,
+
+    openStreetMap:
+      `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=18/${latitude}/${longitude}`,
+  };
+}
+
+// --------------------------------------------------
+// Initial report
+// --------------------------------------------------
+
+function generatePDF({
+  filename,
+  title,
+  sections,
+}) {
+  return new Promise((resolve, reject) => {
+    const filePath = path.join(REPORT_DIR, filename);
+
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 50,
+      info: {
+        Title: title,
+        Author: "Corruption AI Investigation System",
+      },
+    });
+
+    const stream = fs.createWriteStream(filePath);
+
+    doc.pipe(stream);
+
+    doc
+      .fontSize(20)
+      .font("Helvetica-Bold")
+      .text(title, {
+        align: "center",
+      });
+
+    doc.moveDown();
+
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .text(
+        `Generated: ${new Date().toISOString()}`
+      );
+
+    doc.moveDown(1);
+
+    for (const section of sections) {
+      doc
+        .fontSize(14)
+        .font("Helvetica-Bold")
+        .text(section.title);
+
+      doc.moveDown(0.4);
+
+      doc
+        .fontSize(10)
+        .font("Helvetica");
+
+      const content =
+        typeof section.content === "string"
+          ? section.content
+          : JSON.stringify(
+              section.content,
+              null,
+              2
+            );
+
+      doc.text(content, {
+        align: "left",
+      });
+
+      doc.moveDown(1);
     }
-    return { latitude: lat, longitude: lon, error: 'Location not found' };
-  } catch (error) {
-    console.error('❌ Geocoding error:', error.message);
-    return { latitude: lat, longitude: lon, error: error.message };
-  }
+
+    doc.end();
+
+    stream.on("finish", () => {
+      resolve(filePath);
+    });
+
+    stream.on("error", reject);
+  });
 }
 
-// ---------- 3. Tender Search (Mock – Real API से Replace करें) ----------
-async function searchTenders(location) {
-  // Mock data – real के लिए Bidrove MCP API integrate करें
+// --------------------------------------------------
+// Basic evidence classification
+// --------------------------------------------------
+
+function buildEvidenceRules() {
+  return {
+    observed:
+      "Directly visible or directly measured information.",
+
+    documented:
+      "Information obtained from an official/public document.",
+
+    verified:
+      "Information confirmed by multiple reliable sources.",
+
+    allegation:
+      "A claim that has not yet been independently verified.",
+
+    missing:
+      "Information that requires further research or RTI.",
+  };
+}
+
+// --------------------------------------------------
+// Research plan
+// --------------------------------------------------
+
+function createResearchPlan(location, tenderId) {
   return [
     {
-      id: 'GEM/2024/B/001',
-      title: 'Road Construction',
-      department: 'PWD',
-      budget: '₹50,00,000',
-      contractor: 'ABC Constructions',
-      status: 'Active',
+      priority: 1,
+      item: "Identify responsible department",
+      status: "pending",
     },
     {
-      id: 'GEM/2024/B/002',
-      title: 'School Building',
-      department: 'Education',
-      budget: '₹25,00,000',
-      contractor: 'XYZ Builders',
-      status: 'Completed',
+      priority: 2,
+      item: "Identify Gram Panchayat / local authority",
+      status: "pending",
+    },
+    {
+      priority: 3,
+      item: "Find matching tender/work order",
+      status: tenderId ? "provided_by_user" : "pending",
+    },
+    {
+      priority: 4,
+      item: "Identify contractor",
+      status: "pending",
+    },
+    {
+      priority: 5,
+      item: "Find sanctioned amount",
+      status: "pending",
+    },
+    {
+      priority: 6,
+      item: "Find BOQ / work specifications",
+      status: "pending",
+    },
+    {
+      priority: 7,
+      item: "Find inspection/measurement records",
+      status: "pending",
+    },
+    {
+      priority: 8,
+      item: "Find payment/bill records",
+      status: "pending",
+    },
+    {
+      priority: 9,
+      item: "Find material quality certificates",
+      status: "pending",
+    },
+    {
+      priority: 10,
+      item: "Identify missing records for RTI",
+      status: "pending",
     },
   ];
 }
 
-// ---------- 4. PDF Generation (PDFKit) ----------
-function generatePDFReport(filename, title, sections, evidence = []) {
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument({ size: 'A4', margin: 50 });
-      const writeStream = fs.createWriteStream(filename);
-      doc.pipe(writeStream);
+// --------------------------------------------------
+// Main investigation
+// --------------------------------------------------
 
-      // Title
-      doc.fontSize(20)
-        .font('Helvetica-Bold')
-        .fillColor('#1a237e')
-        .text(title, { align: 'center' });
-      doc.moveDown();
+async function runInvestigation({
+  latitude,
+  longitude,
+  timestamp,
+  tenderId,
+  photo,
+}) {
+  console.log(
+    `🔎 Investigation started: ${latitude}, ${longitude}`
+  );
 
-      // Timestamp
-      doc.fontSize(10)
-        .font('Helvetica')
-        .fillColor('black')
-        .text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`);
-      doc.moveDown();
+  const location = await getLocationDetails(
+    latitude,
+    longitude
+  );
 
-      // Sections
-      sections.forEach((sec) => {
-        doc.fontSize(14)
-          .font('Helvetica-Bold')
-          .fillColor('#1a237e')
-          .text(sec.heading);
-        doc.moveDown(0.5);
-        doc.fontSize(10)
-          .font('Helvetica')
-          .fillColor('black');
-        (sec.content || []).forEach((para) => {
-          doc.text(String(para), { align: 'justify' });
-          doc.moveDown(0.3);
-        });
-        doc.moveDown();
-      });
+  const maps = createMapLinks(
+    latitude,
+    longitude
+  );
 
-      // Evidence table
-      if (evidence && evidence.length > 0) {
-        doc.addPage();
-        doc.fontSize(14)
-          .font('Helvetica-Bold')
-          .text('Evidence Attached');
-        doc.moveDown();
-        const tableTop = doc.y;
-        doc.fontSize(8).font('Helvetica-Bold');
-        doc.text('#', 50, tableTop);
-        doc.text('Description', 80, tableTop);
-        doc.text('Source', 300, tableTop);
-        doc.moveDown();
-        let currentY = doc.y;
-        evidence.forEach((ev, i) => {
-          doc.fontSize(8).font('Helvetica');
-          doc.text(`${i + 1}`, 50, currentY);
-          const desc = (ev.desc || '').substring(0, 50);
-          doc.text(desc, 80, currentY);
-          const src = (ev.src || '').substring(0, 40);
-          doc.text(src, 300, currentY);
-          currentY += 20;
-          doc.moveDown(0.5);
-        });
-      }
+  const researchPlan = createResearchPlan(
+    location,
+    tenderId
+  );
 
-      doc.end();
-      writeStream.on('finish', () => resolve(filename));
-      writeStream.on('error', (err) => reject(err));
-    } catch (error) {
-      reject(error);
-    }
+  const evidenceRules =
+    buildEvidenceRules();
+
+  // IMPORTANT:
+  // No fake contractor/tender/budget data.
+  // Unknown information remains unknown.
+
+  const initialReport = await generatePDF({
+    filename:
+      `initial-investigation-${Date.now()}.pdf`,
+
+    title:
+      "Initial Field Investigation Report",
+
+    sections: [
+      {
+        title: "1. Capture Information",
+        content: {
+          timestamp,
+          latitude,
+          longitude,
+          photoCaptured: Boolean(photo),
+        },
+      },
+
+      {
+        title: "2. Location Information",
+        content: location,
+      },
+
+      {
+        title: "3. Map References",
+        content: maps,
+      },
+
+      {
+        title: "4. User Supplied Tender ID",
+        content:
+          tenderId ||
+          "No tender ID supplied.",
+      },
+
+      {
+        title: "5. Evidence Classification Rules",
+        content: evidenceRules,
+      },
+
+      {
+        title: "6. Research Plan",
+        content: researchPlan,
+      },
+
+      {
+        title: "7. Important Limitation",
+        content:
+          "No contractor, budget, tender, supplier, quality or corruption allegation has been treated as established fact at this stage. These facts require documentary verification.",
+      },
+    ],
   });
-}
 
-// ---------- 5. Google Drive Upload (Optional) ----------
-async function uploadToDrive(filePath, fileName) {
-  try {
-    if (!fs.existsSync('credentials.json')) {
-      console.warn('⚠️ credentials.json not found – skipping Drive upload');
-      return `LOCAL_FILE: ${filePath}`;
-    }
+  const researchReport = await generatePDF({
+    filename:
+      `research-plan-${Date.now()}.pdf`,
 
-    const auth = new google.auth.GoogleAuth({
-      keyFile: 'credentials.json',
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
-    });
-    const drive = google.drive({ version: 'v3', auth });
-    const fileMeta = {
-      name: fileName || path.basename(filePath),
-    };
-    const media = {
-      mimeType: 'application/pdf',
-      body: fs.createReadStream(filePath),
-    };
-    const response = await drive.files.create({
-      resource: fileMeta,
-      media: media,
-      fields: 'id',
-    });
-    const fileId = response.data.id;
-    return `https://drive.google.com/file/d/${fileId}/view`;
-  } catch (error) {
-    console.warn('⚠️ Google Drive upload failed:', error.message);
-    return `LOCAL_FILE: ${filePath}`;
-  }
-}
+    title:
+      "Government Work Deep Research & Evidence Plan",
 
-// ---------- 6. RTI Draft Generation ----------
-function generateRTIDraft(subject, department, questions) {
-  let draft = `To,\nThe Public Information Officer,\n${department}\nGovernment of India\n\n`;
-  draft += `Subject: ${subject}\n\n`;
-  draft += `Respected Sir/Madam,\n\n`;
-  draft += `I, a citizen of India, request the following information under the Right to Information Act, 2005:\n\n`;
-  questions.forEach((q, i) => {
-    draft += `${i + 1}. ${q}\n`;
+    sections: [
+      {
+        title: "Location",
+        content: location,
+      },
+
+      {
+        title: "Potential Government Records to Research",
+        content: [
+          "Tender notice",
+          "Bid documents",
+          "Work order",
+          "Agreement",
+          "BOQ",
+          "Administrative sanction",
+          "Technical sanction",
+          "Measurement Book / equivalent record",
+          "Inspection report",
+          "Completion certificate",
+          "Payment records",
+          "Material test reports",
+          "Quality certificates",
+          "Supplier information",
+          "Audit observations",
+        ].join("\n"),
+      },
+
+      {
+        title: "Supplier / Material Investigation",
+        content:
+          "Supplier identity, material specifications, test certificates, invoices, warranty/quality claims and procurement records must be independently verified from documentary sources before any allegation is made.",
+      },
+
+      {
+        title: "RTI Evidence Gaps",
+        content:
+          researchPlan
+            .filter(
+              (x) =>
+                x.status === "pending"
+            )
+            .map(
+              (x, i) =>
+                `${i + 1}. ${x.item}`
+            )
+            .join("\n"),
+      },
+    ],
   });
-  draft += `\nPlease provide the above information within the stipulated 30 days.\n\n`;
-  draft += `Yours sincerely,\nCitizen\n`;
-  draft += `Date: ${new Date().toLocaleDateString('en-IN')}`;
-  return draft;
+
+  const finalDraft = await generatePDF({
+    filename:
+      `evidence-dossier-${Date.now()}.pdf`,
+
+    title:
+      "Evidence Dossier - Preliminary",
+
+    sections: [
+      {
+        title: "Verified Location Data",
+        content: location,
+      },
+
+      {
+        title: "Capture Time",
+        content: timestamp,
+      },
+
+      {
+        title: "GPS Coordinates",
+        content:
+          `${latitude}, ${longitude}`,
+      },
+
+      {
+        title: "Google Maps",
+        content:
+          maps.googleMaps,
+      },
+
+      {
+        title: "OpenStreetMap",
+        content:
+          maps.openStreetMap,
+      },
+
+      {
+        title: "Current Evidence Status",
+        content:
+          "This dossier contains preliminary field/location evidence. Contractor identity, work value, supplier, bills, quality claims and legal violations must not be stated as established facts until documentary evidence is obtained.",
+      },
+    ],
+  });
+
+  return {
+    status: "success",
+
+    capture: {
+      timestamp,
+      latitude,
+      longitude,
+      photoReceived: Boolean(photo),
+    },
+
+    location,
+
+    maps,
+
+    researchPlan,
+
+    reports: {
+      initial: initialReport,
+      research: researchReport,
+      evidenceDossier: finalDraft,
+    },
+
+    driveLinks: [],
+
+    rti: {
+      status: "draft_required",
+      missingInformation:
+        researchPlan
+          .filter(
+            (x) =>
+              x.status === "pending"
+          )
+          .map((x) => x.item),
+    },
+
+    message:
+      "Initial investigation completed. Further government-record research is required before making any allegation.",
+  };
 }
 
-// ---------- 7. Main Investigation Function ----------
-async function runInvestigation(lat, lon, tenderId = null) {
-  console.log(`🚀 Starting investigation at (${lat}, ${lon})`);
-
-  try {
-    // 1. Get location details
-    const location = await getLocationDetails(lat, lon);
-    const city = location.city || location.district || 'India';
-
-    // 2. Fetch tenders
-    const tenders = await searchTenders(city);
-
-    // 3. AI analysis
-    const prompt = `
-      You are a corruption investigation expert in India.
-      Analyze the following location and tender data.
-      Location: ${JSON.stringify(location)}
-      Tenders: ${JSON.stringify(tenders)}
-      Provide:
-      - Budget analysis (is the budget reasonable?)
-      - Quality concerns (does the contractor have a good track record?)
-      - Fraud indicators (any red flags?)
-      - Recommendations for further investigation.
-      Format as a short report.
-    `;
-    const aiSummary = await callGemini(prompt);
-
-    // 4. Generate PDF reports
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const reports = [];
-    const driveLinks = [];
-
-    // Report 1 – Initial investigation
-    const r1 = `report_1_${timestamp}.pdf`;
-    await generatePDFReport(
-      r1,
-      'Initial Investigation Report – Government Tender',
-      [
-        {
-          heading: 'Location Details',
-          content: [JSON.stringify(location, null, 2)],
-        },
-        {
-          heading: 'Tenders Found',
-          content: [JSON.stringify(tenders, null, 2)],
-        },
-        {
-          heading: 'AI Analysis',
-          content: [aiSummary],
-        },
-      ]
-    );
-    reports.push(r1);
-    driveLinks.push(await uploadToDrive(r1));
-
-    // Report 2 – Supplier / Contractor fraud
-    const r2 = `report_2_${timestamp}.pdf`;
-    await generatePDFReport(
-      r2,
-      'Supplier Fraud & Quality Analysis',
-      [
-        {
-          heading: 'Contractor History',
-          content: ['Check past performance, complaints, and quality claims.'],
-        },
-        {
-          heading: 'Red Flags',
-          content: ['Possible overpricing, incomplete past projects, or use of substandard materials.'],
-        },
-        {
-          heading: 'Recommendations',
-          content: ['Verify bills and material certificates; compare with market rates.'],
-        },
-      ]
-    );
-    reports.push(r2);
-    driveLinks.push(await uploadToDrive(r2));
-
-    // RTI draft
-    const rtiQuestions = [
-      'Provide complete details of the tender including all bidders and their financial quotes.',
-      'Provide quality certificates and test reports of materials used.',
-      'Provide bills and payment records for the work done.',
-      'Provide inspection reports and compliance certificates.',
-    ];
-    const rtiDraft = generateRTIDraft(
-      'Corruption Investigation in Tender',
-      tenders[0]?.department || 'Public Works Department',
-      rtiQuestions
-    );
-
-    // Report 3 – Final complaint with RTI and evidence
-    const r3 = `report_3_final_${timestamp}.pdf`;
-    await generatePDFReport(
-      r3,
-      'Final Complaint – Corruption in Government Tender',
-      [
-        {
-          heading: 'Summary of Findings',
-          content: [aiSummary.substring(0, 500)],
-        },
-        {
-          heading: 'RTI Application Draft',
-          content: [rtiDraft],
-        },
-        {
-          heading: 'Evidence / Supporting Documents',
-          content: ['List of evidence will be attached here (GPS coordinates, photos, etc.).'],
-        },
-      ],
-      [{ desc: 'GPS Location & Timestamp', src: `Lat ${lat}, Lon ${lon}` }]
-    );
-    reports.push(r3);
-    driveLinks.push(await uploadToDrive(r3));
-
-    return {
-      status: 'success',
-      location: location,
-      tenders: tenders,
-      aiSummary: aiSummary,
-      driveLinks: driveLinks,
-      rtiDraft: rtiDraft,
-      localFiles: reports,
-    };
-  } catch (error) {
-    console.error('❌ Investigation failed:', error);
-    return {
-      status: 'error',
-      error: error.message,
-    };
-  }
-}
-
-module.exports = { runInvestigation };
+module.exports = {
+  runInvestigation,
+};
