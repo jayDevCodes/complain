@@ -6,8 +6,6 @@ const http = require('node:http');
 const CASE_DIR = path.join(__dirname, 'cases');
 const REPORT_DIR = path.join(__dirname, 'reports');
 
-// Mock only the external geocoder. AI/search APIs intentionally remain unconfigured,
-// so this demo exercises the real application pipeline without requiring secrets.
 const originalFetch = global.fetch;
 global.fetch = async (url, options) => {
   const target = String(url);
@@ -39,10 +37,7 @@ function request(port, method, route, body) {
   return new Promise((resolve, reject) => {
     const payload = body == null ? null : JSON.stringify(body);
     const req = http.request({
-      hostname: '127.0.0.1',
-      port,
-      path: route,
-      method,
+      hostname: '127.0.0.1', port, path: route, method,
       headers: {
         Accept: 'application/json',
         ...(payload ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {})
@@ -71,26 +66,26 @@ async function waitForHealth(port) {
   for (let i = 0; i < 30; i++) {
     try {
       const result = await request(port, 'GET', '/api/health');
-      if (result.status === 200) return result;
+      if (result.status === 200) return;
     } catch (_) {}
     await new Promise(resolve => setTimeout(resolve, 250));
   }
   throw new Error('Server did not become healthy within 7.5 seconds');
 }
 
+function safeRemove(filePath) {
+  try { fs.rmSync(filePath, { recursive: true, force: true }); } catch (_) {}
+}
+
 (async () => {
   const port = Number(process.env.PORT || 5311);
   process.env.PORT = String(port);
 
-  const serverModule = require('./app');
-  const server = serverModule.__server || null;
-
-  // app.js currently owns the listener, so find it through the exported server when available.
-  // For backward compatibility, discover the active listener by polling health.
+  const { server } = require('./app');
   await waitForHealth(port);
 
   let investigationId = null;
-  let crossCasePath = null;
+  let success = false;
 
   try {
     const health = await request(port, 'GET', '/api/health');
@@ -118,27 +113,22 @@ async function waitForHealth(port) {
     assert.ok(fs.existsSync(casePath), 'case JSON should be generated');
     assert.ok(fs.existsSync(graphPath), 'graph JSON should be generated');
 
-    const caseResponse = await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}`);
-    assertStatus(caseResponse, 200, 'get-case');
+    assertStatus(await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}`), 200, 'get-case');
 
     const graphResponse = await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}/graph`);
     assertStatus(graphResponse, 200, 'get-graph');
     assert.ok(graphResponse.body.stats.nodes >= 1, 'graph should contain nodes');
 
-    const leadsResponse = await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}/graph/leads?min_score=0`);
-    assertStatus(leadsResponse, 200, 'get-graph-leads');
+    assertStatus(await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}/graph/leads?min_score=0`), 200, 'get-graph-leads');
 
     const comparative = await request(port, 'POST', `/api/case/${encodeURIComponent(investigationId)}/comparative-research`);
     assertStatus(comparative, 200, 'comparative-research');
     assert.ok(comparative.body.reports.comparativePdf, 'comparative PDF URL should be returned');
-
-    const comparativeReport = await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}/comparative-report`);
-    assertStatus(comparativeReport, 200, 'comparative-report');
+    assertStatus(await request(port, 'GET', `/api/case/${encodeURIComponent(investigationId)}/comparative-report`), 200, 'comparative-report');
 
     const crossCase = await request(port, 'POST', `/api/case/${encodeURIComponent(investigationId)}/cross-case-intelligence`);
     assertStatus(crossCase, 200, 'cross-case-intelligence');
     assert.ok(crossCase.body.graphFile, 'cross-case graph URL should be returned');
-    crossCasePath = path.join(CASE_DIR, path.basename(crossCase.body.graphFile));
 
     const complete = await request(port, 'POST', `/api/case/${encodeURIComponent(investigationId)}/complete-evidence-plan`);
     assertStatus(complete, 200, 'complete-evidence-plan');
@@ -153,42 +143,40 @@ async function waitForHealth(port) {
     assertStatus(globalGraph, 200, 'cross-case-graph');
     assert.equal(typeof globalGraph.body.stats.cases, 'number');
 
+    success = true;
     console.log(JSON.stringify({
       status: 'success',
       investigationId,
       checks: [
-        'health',
-        'start-investigation',
-        'PDF generation',
-        'case persistence',
-        'evidence graph',
-        'graph leads',
-        'comparative research + PDF',
-        'cross-case intelligence',
-        'RTI evidence completion + PDF/JSON',
+        'health', 'start-investigation', 'PDF generation', 'case persistence',
+        'evidence graph', 'graph leads', 'comparative research + PDF',
+        'cross-case intelligence', 'RTI evidence completion + PDF/JSON',
         'cross-case graph endpoint'
       ]
     }, null, 2));
   } finally {
-    // Keep the demo run non-persistent.
     if (investigationId) {
-      for (const file of fs.readdirSync(CASE_DIR, { withFileTypes: true })) {
-        if (file.name.startsWith(investigationId)) fs.rmSync(path.join(CASE_DIR, file.name), { recursive: true, force: true });
+      for (const name of ['cases', 'reports']) {
+        const dir = path.join(__dirname, name);
+        if (!fs.existsSync(dir)) continue;
+        for (const entry of fs.readdirSync(dir)) {
+          if (entry.startsWith(investigationId) || entry.includes(investigationId)) safeRemove(path.join(dir, entry));
+        }
       }
-      for (const file of fs.readdirSync(path.join(CASE_DIR, 'completion'), { withFileTypes: true })) {
-        if (file.name.includes(investigationId)) fs.rmSync(path.join(CASE_DIR, 'completion', file.name), { force: true });
-      }
-      for (const file of fs.readdirSync(REPORT_DIR, { withFileTypes: true })) {
-        if (file.name.includes(investigationId)) fs.rmSync(path.join(REPORT_DIR, file.name), { force: true });
+      const completionDir = path.join(CASE_DIR, 'completion');
+      if (fs.existsSync(completionDir)) {
+        for (const entry of fs.readdirSync(completionDir)) {
+          if (entry.includes(investigationId)) safeRemove(path.join(completionDir, entry));
+        }
       }
     }
-    if (crossCasePath && fs.existsSync(crossCasePath)) fs.rmSync(crossCasePath, { force: true });
-
-    // app.js does not currently export its server. Exit after the route tests to terminate its listener.
-    if (server && typeof server.close === 'function') server.close();
-    process.exit(0);
+    if (server?.listening) {
+      await new Promise(resolve => server.close(resolve));
+    }
   }
+
+  if (!success) process.exitCode = 1;
 })().catch(error => {
   console.error(error.stack || error);
-  process.exit(1);
+  process.exitCode = 1;
 });
