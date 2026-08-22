@@ -89,3 +89,5 @@ app.use((req, res) => res.status(404).json({ status: 'error', error: `Route not 
 const server = app.listen(PORT, HOST, () => console.log(`Government Work Investigation AI v6 listening on ${PORT}`));
 server.on('error', error => console.error('Server error:', error));
 process.on('SIGINT', () => server.close(() => process.exit(0)));
+
+module.exports = { app, server };
