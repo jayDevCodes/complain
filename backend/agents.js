@@ -1,6 +1,4 @@
 // agents.js – Complete AI Logic for Corruption Investigation System
-// Requires: express, cors, dotenv, @google/generative-ai, node-geocoder, pdfkit, axios, googleapis
-
 require('dotenv').config();
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
@@ -9,17 +7,11 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
-const axios = require('axios');
 
 // ---------- 1. Gemini AI Setup ----------
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-/**
- * Call Gemini AI with a prompt
- * @param {string} prompt - User prompt
- * @returns {Promise<string>} - AI response text
- */
 async function callGemini(prompt) {
   try {
     const result = await model.generateContent(prompt);
@@ -36,12 +28,6 @@ const geocoder = NodeGeocoder({
   language: 'en',
 });
 
-/**
- * Get location details from latitude/longitude using OSM (free)
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @returns {Promise<object>} - Location details
- */
 async function getLocationDetails(lat, lon) {
   try {
     const res = await geocoder.reverse({ lat, lon });
@@ -65,73 +51,30 @@ async function getLocationDetails(lat, lon) {
   }
 }
 
-// ---------- 3. Tender Search (Real API with Mock Fallback) ----------
-/**
- * Search tenders by location – uses Bidrove MCP API if available,
- * otherwise returns mock data.
- * @param {string} location - City/District name
- * @returns {Promise<Array>} - List of tenders
- */
+// ---------- 3. Tender Search (Mock) ----------
 async function searchTenders(location) {
-  try {
-    // Attempt to fetch real data from Bidrove MCP (free tier)
-    // Replace with actual API endpoint if you have access
-    const response = await axios.get(
-      `https://api.bidrove.in/tenders?location=${encodeURIComponent(location)}&limit=5`,
-      { timeout: 10000 }
-    );
-    if (response.data && response.data.tenders) {
-      return response.data.tenders;
-    }
-    // If no data, fallback to mock
-    return getMockTenders(location);
-  } catch (error) {
-    console.warn('⚠️ Bidrove API unavailable, using mock tenders:', error.message);
-    return getMockTenders(location);
-  }
-}
-
-/**
- * Mock tender data for demo/testing
- * @param {string} location - Location name
- * @returns {Array} - Array of tender objects
- */
-function getMockTenders(location) {
+  // Mock data – in real, call https://api.bidrove.in/tenders
   return [
     {
       id: 'GEM/2024/B/001',
-      title: 'Construction of Panchayat Bhawan',
-      department: 'Panchayati Raj',
-      budget: '₹45,00,000',
-      contractor: 'Sharma Construction Co.',
+      title: 'Road Construction',
+      department: 'PWD',
+      budget: '₹50,00,000',
+      contractor: 'ABC Constructions',
       status: 'Active',
-      publishedDate: '2024-01-15',
-      closingDate: '2024-02-15',
-      location: location,
     },
     {
       id: 'GEM/2024/B/002',
-      title: 'Road Maintenance Project',
-      department: 'Public Works Department (PWD)',
-      budget: '₹12,50,000',
-      contractor: 'Singh Infrastructure Ltd.',
+      title: 'School Building',
+      department: 'Education',
+      budget: '₹25,00,000',
+      contractor: 'XYZ Builders',
       status: 'Completed',
-      publishedDate: '2023-10-01',
-      closingDate: '2023-11-01',
-      location: location,
     },
   ];
 }
 
 // ---------- 4. PDF Generation (PDFKit) ----------
-/**
- * Generate a professional PDF report
- * @param {string} filename - Output file path
- * @param {string} title - Report title
- * @param {Array<{heading: string, content: string[]}>} sections - Content sections
- * @param {Array<{desc: string, src: string}>} evidence - Evidence list
- * @returns {Promise<string>} - Filename
- */
 function generatePDFReport(filename, title, sections, evidence = []) {
   return new Promise((resolve, reject) => {
     try {
@@ -139,21 +82,21 @@ function generatePDFReport(filename, title, sections, evidence = []) {
       const writeStream = fs.createWriteStream(filename);
       doc.pipe(writeStream);
 
-      // ---- Title ----
+      // Title
       doc.fontSize(20)
         .font('Helvetica-Bold')
         .fillColor('#1a237e')
         .text(title, { align: 'center' });
       doc.moveDown();
 
-      // ---- Timestamp ----
+      // Timestamp
       doc.fontSize(10)
         .font('Helvetica')
         .fillColor('black')
         .text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`);
       doc.moveDown();
 
-      // ---- Sections ----
+      // Sections
       sections.forEach((sec) => {
         doc.fontSize(14)
           .font('Helvetica-Bold')
@@ -170,34 +113,28 @@ function generatePDFReport(filename, title, sections, evidence = []) {
         doc.moveDown();
       });
 
-      // ---- Evidence Table (if any) ----
+      // Evidence table
       if (evidence && evidence.length > 0) {
         doc.addPage();
         doc.fontSize(14)
           .font('Helvetica-Bold')
           .text('Evidence Attached');
         doc.moveDown();
-        // Table header
-        const startY = doc.y;
-        const col1 = 50;
-        const col2 = 80;
-        const col3 = 300;
-        doc.fontSize(8)
-          .font('Helvetica-Bold');
-        doc.text('#', col1, startY);
-        doc.text('Description', col2, startY);
-        doc.text('Source', col3, startY);
+        const tableTop = doc.y;
+        doc.fontSize(8).font('Helvetica-Bold');
+        doc.text('#', 50, tableTop);
+        doc.text('Description', 80, tableTop);
+        doc.text('Source', 300, tableTop);
         doc.moveDown();
         let currentY = doc.y;
         evidence.forEach((ev, i) => {
-          doc.fontSize(8)
-            .font('Helvetica');
-          doc.text(`${i + 1}`, col1, currentY);
+          doc.fontSize(8).font('Helvetica');
+          doc.text(`${i + 1}`, 50, currentY);
           const desc = (ev.desc || '').substring(0, 50);
-          doc.text(desc, col2, currentY);
+          doc.text(desc, 80, currentY);
           const src = (ev.src || '').substring(0, 40);
-          doc.text(src, col3, currentY);
-          currentY += 20; // approximate line height
+          doc.text(src, 300, currentY);
+          currentY += 20;
           doc.moveDown(0.5);
         });
       }
@@ -212,15 +149,8 @@ function generatePDFReport(filename, title, sections, evidence = []) {
 }
 
 // ---------- 5. Google Drive Upload (Optional) ----------
-/**
- * Upload a file to Google Drive (requires credentials.json)
- * @param {string} filePath - Local file path
- * @param {string} fileName - Optional custom name
- * @returns {Promise<string>} - Public link or local fallback
- */
 async function uploadToDrive(filePath, fileName) {
   try {
-    // Check if credentials.json exists
     if (!fs.existsSync('credentials.json')) {
       console.warn('⚠️ credentials.json not found – skipping Drive upload');
       return `LOCAL_FILE: ${filePath}`;
@@ -252,13 +182,6 @@ async function uploadToDrive(filePath, fileName) {
 }
 
 // ---------- 6. RTI Draft Generation ----------
-/**
- * Generate an RTI application draft
- * @param {string} subject - Subject of the RTI
- * @param {string} department - Concerned department
- * @param {string[]} questions - List of questions to ask
- * @returns {string} - Formatted RTI draft
- */
 function generateRTIDraft(subject, department, questions) {
   let draft = `To,\nThe Public Information Officer,\n${department}\nGovernment of India\n\n`;
   draft += `Subject: ${subject}\n\n`;
@@ -274,13 +197,6 @@ function generateRTIDraft(subject, department, questions) {
 }
 
 // ---------- 7. Main Investigation Function ----------
-/**
- * Main investigation orchestrator
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @param {string|null} tenderId - Optional tender ID
- * @returns {Promise<object>} - Results including reports, drive links, RTI draft
- */
 async function runInvestigation(lat, lon, tenderId = null) {
   console.log(`🚀 Starting investigation at (${lat}, ${lon})`);
 
@@ -413,5 +329,4 @@ async function runInvestigation(lat, lon, tenderId = null) {
   }
 }
 
-// ---------- Export ----------
 module.exports = { runInvestigation };
