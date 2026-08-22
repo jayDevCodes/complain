@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { createInvestigationId, source, evidence } = require('./investigation-schema');
+const { createInvestigationId, evidence } = require('./investigation-schema');
 const { runParallelModels, consensus } = require('./ai-orchestrator');
 const { researchLocation } = require('./research-engine');
 const { generateEvidencePDF, REPORT_DIR } = require('./pdf-report');
@@ -44,21 +44,15 @@ async function runInvestigation({ latitude, longitude, timestamp, tenderId, phot
   const location = await getLocationDetails(latitude, longitude);
   const photoPath = savePhoto(photo, investigationId);
   const capture = { timestamp, latitude, longitude, accuracy: accuracy ?? null, photoCaptured: Boolean(photoPath) };
-
   const vision = await runParallelModels('PHOTO_OBJECT_IDENTIFICATION', { capture, location, tenderId, objectHint, department }, photo || null);
   const modelReview = { vision, consensus: consensus(vision.results) };
-  const objectIdentification = {
-    status: vision.configuredCount ? 'AI_REVIEWED_NEEDS_SOURCE_CORROBORATION' : 'UNKNOWN_NO_MODEL_CONFIGURED',
-    candidates: vision.results.filter(x => x.status === 'ok').map(x => ({ provider: x.provider, result: x.result }))
-  };
+  const objectIdentification = { status: vision.configuredCount ? 'AI_REVIEWED_NEEDS_SOURCE_CORROBORATION' : 'UNKNOWN_NO_MODEL_CONFIGURED', candidates: vision.results.filter(x => x.status === 'ok').map(x => ({ provider: x.provider, result: x.result })) };
   const description = objectHint || objectIdentification.candidates.map(x => x.result?.object || x.result?.description || '').filter(Boolean).join(' | ');
-
   const research = await researchLocation({ location, objectDescription: description, department, tenderId });
   const sources = research.sources || [];
   const synthesis = await runParallelModels('TENDER_EXECUTION_QUALITY_AUDIT', { capture, location, objectIdentification, sources, tenderId, researchQueries: research.queries }, photo || null);
   modelReview.synthesis = synthesis;
   modelReview.synthesisConsensus = consensus(synthesis.results);
-
   const evidenceItems = [
     evidence(`Photo captured at ${timestamp}`, 'OBSERVED', 1, [], 'Direct field capture metadata.'),
     evidence(`GPS coordinates ${latitude}, ${longitude}`, 'OBSERVED', 1, [], 'Device supplied coordinates; accuracy should be retained.'),
@@ -70,17 +64,7 @@ async function runInvestigation({ latitude, longitude, timestamp, tenderId, phot
   const tender = { status: tenderId ? 'USER_SUPPLIED_ID_NEEDS_DOCUMENT_VERIFICATION' : 'NOT_ESTABLISHED', tenderId: tenderId || null, modelFindings: synthesized.map(x => x.tender || x.contract || x.findings).filter(Boolean) };
   const comparison = synthesized.flatMap(x => x.comparison || x.defects || []).map(x => typeof x === 'string' ? { item: x, expected: 'Unknown', observed: 'AI finding only', gap: 'Requires documentary/technical verification', refs: [] } : x).slice(0, 30);
   const execution = { status: 'DOCUMENTARY_RESEARCH_REQUIRED', findings: synthesized.map(x => x.inspection || x.measurement || x.payment || x.execution).filter(Boolean) };
-  const gaps = [
-    'Obtain the exact tender notice/work order and sanctioned amount from a primary government source.',
-    'Obtain BOQ/SOW/specifications and identify measurable acceptance criteria.',
-    'Obtain Measurement Book/e-MB entries, inspection notes and completion certificate.',
-    'Obtain material test reports, laboratory certificates and relevant invoices.',
-    'Match contractor, work order, payment/bill records and dates.',
-    'Compare measured dimensions/material properties with the contractual specification.',
-    'Identify the inspecting/recording officer only from official records.',
-    'Do not infer financial loss or misconduct without measurements, records and corroboration.'
-  ];
-
+  const gaps = ['Obtain the exact tender notice/work order and sanctioned amount from a primary government source.','Obtain BOQ/SOW/specifications and identify measurable acceptance criteria.','Obtain Measurement Book/e-MB entries, inspection notes and completion certificate.','Obtain material test reports, laboratory certificates and relevant invoices.','Match contractor, work order, payment/bill records and dates.','Compare measured dimensions/material properties with the contractual specification.','Identify the inspecting/recording officer only from official records.','Do not infer financial loss or misconduct without measurements, records and corroboration.'];
   const report = { investigationId, version: 1, title: 'Government Work Evidence Investigation Dossier', capture, location, photoPath, department: department || '', objectIdentification, tender, comparison, execution, evidence: evidenceItems, sources, modelReview, gaps, researchQueries: research.queries };
   const casePath = safeCaseWrite(investigationId, report);
   const pdfPath = await generateEvidencePDF(report);
@@ -90,24 +74,23 @@ async function runInvestigation({ latitude, longitude, timestamp, tenderId, phot
 async function runComparativeInvestigation(investigationId) {
   const loaded = safeCaseRead(investigationId);
   const baseCase = loaded.data;
-  const comparative = await runComparativeResearch(baseCase);
+  const previousResearch = baseCase.comparativeResearch || null;
+  const comparative = await runComparativeResearch(baseCase, previousResearch);
+  const history = Array.isArray(baseCase.comparativeHistory) ? baseCase.comparativeHistory.slice(-4) : [];
+  if (previousResearch) history.push({ version: previousResearch.version, generatedAt: previousResearch.generatedAt, changeLog: previousResearch.changeLog, signals: previousResearch.signals });
   const updated = {
     ...baseCase,
     version: comparative.version,
     comparativeResearch: comparative,
-    reports: {
-      ...(baseCase.reports || {}),
-      comparativePdf: null
-    }
+    comparativeHistory: history,
+    reports: { ...(baseCase.reports || {}), comparativePdf: null }
   };
-  const comparativePdf = await generateComparativePDF(comparative, baseCase);
+  const comparativePdf = await generateComparativePDF(comparative, updated);
   updated.reports.comparativePdf = comparativePdf;
   const casePath = safeCaseWrite(investigationId, updated);
   return { ...comparative, investigationId, reports: { comparativePdf, case: casePath } };
 }
 
-function loadCase(investigationId) {
-  return safeCaseRead(investigationId).data;
-}
+function loadCase(investigationId) { return safeCaseRead(investigationId).data; }
 
 module.exports = { runInvestigation, runComparativeInvestigation, loadCase, REPORT_DIR, CASE_DIR };
