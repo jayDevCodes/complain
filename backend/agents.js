@@ -8,13 +8,15 @@ const { generateEvidencePDF, REPORT_DIR } = require('./pdf-report');
 const { runComparativeResearch } = require('./comparative-engine');
 const { generateComparativePDF } = require('./comparative-pdf-report');
 const { ensureGraph, ingestSources, mergeGraph, graphStats } = require('./evidence-graph');
+const { buildCrossCaseGraph } = require('./cross-case-graph');
+const { buildFinalEvidencePlan } = require('./evidence-completion');
 
 const CASE_DIR = path.join(__dirname, 'cases');
 if (!fs.existsSync(CASE_DIR)) fs.mkdirSync(CASE_DIR, { recursive: true });
 
 async function getLocationDetails(latitude, longitude) {
   const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=18&addressdetails=1`;
-  const response = await fetch(url, { headers: { 'User-Agent': 'GovernmentWorkInvestigationAI/5.0' } });
+  const response = await fetch(url, { headers: { 'User-Agent': 'GovernmentWorkInvestigationAI/6.0' } });
   if (!response.ok) throw new Error(`Location service failed: HTTP ${response.status}`);
   const data = await response.json(); const a = data.address || {};
   return { latitude, longitude, display_name: data.display_name || null, village: a.village || a.hamlet || a.suburb || null, town: a.town || a.city || a.municipality || null, district: a.county || a.state_district || null, state: a.state || null, country: a.country || null, pincode: a.postcode || null, raw: data };
@@ -89,6 +91,36 @@ async function runComparativeInvestigation(investigationId) {
   return { ...comparative, investigationId, graph: { stats: graphStats(graph), path: graphPath }, reports: { comparativePdf, case: casePath, graph: graphPath } };
 }
 
+async function runCrossCaseIntelligence(investigationId) {
+  const loaded = safeCaseRead(investigationId);
+  const globalGraph = buildCrossCaseGraph(CASE_DIR);
+  const p = path.join(CASE_DIR, 'cross-case-graph.json');
+  fs.writeFileSync(p, JSON.stringify(globalGraph, null, 2));
+  const caseId = loaded.data.investigationId || investigationId;
+  const matches = (globalGraph.matches || []).filter(m => m.caseA.includes(caseId) || m.caseB.includes(caseId));
+  return { investigationId, matches, graph: globalGraph, path: p };
+}
+
+async function runFinalEvidencePlan(investigationId) {
+  const loaded = safeCaseRead(investigationId);
+  let caseData = loaded.data;
+  if (!caseData.comparativeResearch) {
+    await runComparativeInvestigation(investigationId);
+    caseData = safeCaseRead(investigationId).data;
+  }
+  const result = await buildFinalEvidencePlan({ caseData, caseDir: CASE_DIR });
+  const crossCasePath = path.join(CASE_DIR, 'cross-case-graph.json');
+  fs.writeFileSync(crossCasePath, JSON.stringify(result.globalGraph, null, 2));
+  const updated = {
+    ...caseData,
+    crossCase: { stats: result.globalGraph.stats, matches: result.matches },
+    rti: { totalRequests: result.rti.totalRequests, readinessScore: result.rti.readinessScore, path: result.files.json, pdf: result.files.pdf },
+    reports: { ...(caseData.reports || {}), rtiPdf: result.files.pdf, rtiJson: result.files.json, crossCaseGraph: crossCasePath }
+  };
+  const casePath = safeCaseWrite(investigationId, updated);
+  return { investigationId, crossCase: updated.crossCase, rti: result.rti, reports: { rtiPdf: result.files.pdf, rtiJson: result.files.json, crossCaseGraph: crossCasePath, case: casePath } };
+}
+
 function loadCase(investigationId) { return safeCaseRead(investigationId).data; }
 
-module.exports = { runInvestigation, runComparativeInvestigation, loadCase, loadGraph, saveGraph, REPORT_DIR, CASE_DIR, graphStats };
+module.exports = { runInvestigation, runComparativeInvestigation, runCrossCaseIntelligence, runFinalEvidencePlan, loadCase, loadGraph, saveGraph, REPORT_DIR, CASE_DIR, graphStats };
