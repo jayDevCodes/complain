@@ -8,7 +8,21 @@ const MODEL_CONFIGS = [
 ];
 
 function promptFor(stage, payload) {
-  return `You are an evidence-first government-work investigator. Stage: ${stage}.\nRules: distinguish OBSERVED, DOCUMENTED, VERIFIED, INFERRED, ALLEGED and UNKNOWN. Never invent tender numbers, contractors, prices, officers, measurements or defects. A photo alone cannot prove corruption. State what evidence would confirm each inference. Prefer primary government records and exact source URLs.\nCase payload:\n${JSON.stringify(payload, null, 2)}`;
+  return `You are an evidence-first government-work investigator. Stage: ${stage}.
+
+PHOTO ROBUSTNESS RULES:
+- The supplied field photo may be portrait, landscape, rotated, tilted, taken from the side, close-up, wide-angle, partially obstructed, low-light, or framed imperfectly.
+- Never reject or downgrade a photo merely because its camera angle/orientation is unusual.
+- First inspect whatever portion of the work/object is actually visible and extract only defensible observations.
+- Perspective distortion is normal in field photography. Do not treat perspective alone as a defect.
+- If a measurement, material property, identity, or other fact cannot be established from the visible image, mark it UNKNOWN/NEEDS_SOURCE_CORROBORATION instead of guessing.
+- When the view is insufficient, explain exactly what additional record, measurement, second photograph, or test would resolve the uncertainty.
+- Do not invent tender numbers, contractors, prices, officers, measurements or defects. A photo alone cannot prove corruption.
+- Distinguish OBSERVED, DOCUMENTED, VERIFIED, INFERRED, ALLEGED and UNKNOWN.
+- Prefer primary government records and exact source URLs.
+
+Case payload:
+${JSON.stringify(payload, null, 2)}`;
 }
 
 function parseModelJSON(raw) {
@@ -22,8 +36,8 @@ function parseModelJSON(raw) {
 async function callOpenAICompatible(config, prompt, imageDataUrl) {
   if (!process.env[config.key]) return { provider: config.name, status: 'not_configured' };
   const content = [{ type: 'text', text: prompt }];
-  if (imageDataUrl) content.push({ type: 'image_url', image_url: { url: imageDataUrl } });
-  const response = await fetch(`${config.base.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env[config.key]}` }, body: JSON.stringify({ model: config.model, temperature: 0.1, messages: [{ role: 'system', content: 'Return strict JSON where possible. Be conservative with claims.' }, { role: 'user', content }], response_format: { type: 'json_object' } }) });
+  if (imageDataUrl) content.push({ type: 'image_url', image_url: { url: imageDataUrl, detail: 'high' } });
+  const response = await fetch(`${config.base.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env[config.key]}` }, body: JSON.stringify({ model: config.model, temperature: 0.1, messages: [{ role: 'system', content: 'Return strict JSON where possible. Be conservative with claims and tolerant of normal field-photo orientation/perspective.' }, { role: 'user', content }], response_format: { type: 'json_object' } }) });
   const text = await response.text();
   if (!response.ok) throw new Error(`${config.name} HTTP ${response.status}: ${text.slice(0, 500)}`);
   const data = JSON.parse(text);
@@ -35,7 +49,7 @@ async function callAnthropic(config, prompt, imageDataUrl) {
   const content = [{ type: 'text', text: prompt }];
   const m = imageDataUrl?.match(/^data:image\/(png|jpe?g|webp);base64,(.+)$/i);
   if (m) content.unshift({ type: 'image', source: { type: 'base64', media_type: `image/${m[1].toLowerCase() === 'jpg' ? 'jpeg' : m[1].toLowerCase()}`, data: m[2] } });
-  const response = await fetch(`${config.base.replace(/\/$/, '')}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': process.env[config.key], 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: config.model, max_tokens: 4096, temperature: 0.1, system: 'Return strict JSON where possible. Be conservative with claims.', messages: [{ role: 'user', content }] }) });
+  const response = await fetch(`${config.base.replace(/\/$/, '')}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': process.env[config.key], 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: config.model, max_tokens: 4096, temperature: 0.1, system: 'Return strict JSON where possible. Be conservative with claims and tolerant of normal field-photo orientation/perspective.', messages: [{ role: 'user', content }] }) });
   const text = await response.text();
   if (!response.ok) throw new Error(`${config.name} HTTP ${response.status}: ${text.slice(0, 500)}`);
   const data = JSON.parse(text);
