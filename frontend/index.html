@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Corruption AI – Investigation</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    #video { width: 100%; max-width: 400px; border: 1px solid #ccc; }
+    button { padding: 10px 20px; font-size: 16px; }
+    #result { white-space: pre-wrap; background: #f4f4f4; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>📸 भ्रष्टाचार विरोधी AI सिस्टम</h1>
+  <video id="video" autoplay muted></video><br/>
+  <button id="captureBtn">📷 Capture GPS + Timestamp & Investigate</button>
+  <div id="result"></div>
+
+  <script>
+    const video = document.getElementById('video');
+    const resultDiv = document.getElementById('result');
+
+    // ----- Camera setup -----
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          video.srcObject = stream;
+        })
+        .catch(err => alert('Camera access denied: ' + err.message));
+    }
+
+    document.getElementById('captureBtn').onclick = () => {
+      // GPS
+      if (!navigator.geolocation) {
+        alert('Geolocation not supported');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const timestamp = new Date().toISOString();
+
+          resultDiv.innerText = '⏳ Investigating...';
+
+          try {
+            const response = await fetch('http://localhost:5000/api/start-investigation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ latitude: lat, longitude: lon, timestamp })
+            });
+            const data = await response.json();
+            resultDiv.innerText = '✅ Investigation Complete!\n\n' +
+              '📌 Location: ' + JSON.stringify(data.location, null, 2) + '\n\n' +
+              '📄 Drive Links:\n' + data.driveLinks.join('\n') + '\n\n' +
+              '📝 RTI Draft:\n' + data.rtiDraft;
+          } catch (err) {
+            resultDiv.innerText = '❌ Error: ' + err.message;
+          }
+        },
+        (err) => alert('GPS error: ' + err.message),
+        { enableHighAccuracy: true }
+      );
+    };
+  </script>
+</body>
+</html>
