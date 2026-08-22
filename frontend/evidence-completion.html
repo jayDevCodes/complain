@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Evidence Completion & RTI AI</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,#f8fafc,#e0e7ff);color:#0f172a}.wrap{width:min(1050px,94%);margin:28px auto}.card{background:#fff;border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 20px 60px #0f172a14;padding:24px}.hero{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.hero h1{margin:0;font-size:clamp(1.5rem,3vw,2.2rem)}.muted{color:#64748b}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:18px}.box{padding:15px;border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc}.box b{display:block;font-size:13px;color:#64748b;margin-bottom:5px}.box span{font-size:20px;font-weight:800}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}input,button{font:inherit;border-radius:13px;padding:13px 15px}input{border:1px solid #cbd5e1;flex:1;min-width:240px}button{border:0;background:#111827;color:#fff;font-weight:800;cursor:pointer}.primary{background:#2563eb}.success{background:#15803d}.result{margin-top:18px;white-space:pre-wrap;background:#020617;color:#e2e8f0;border-radius:16px;padding:16px;overflow:auto}.links{margin-top:15px;display:flex;gap:10px;flex-wrap:wrap}.links a{padding:11px 14px;background:#dbeafe;color:#1d4ed8;border-radius:12px;text-decoration:none;font-weight:800}.warning{margin-top:15px;padding:13px;border-radius:12px;background:#fff7ed;color:#9a3412}.hidden{display:none}
+  </style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+  <div class="hero"><div><h1>🧠 Evidence Completion AI</h1><p class="muted">Cross-case intelligence → evidence gaps → department-wise RTI drafts</p></div><strong>v6</strong></div>
+  <div class="actions"><input id="caseId" placeholder="Investigation Case ID"><button class="primary" id="run">Run Final Evidence Plan</button></div>
+  <div id="status" class="warning">Case ID डालकर final evidence pass शुरू करें.</div>
+  <div id="stats" class="grid hidden"></div>
+  <div id="links" class="links"></div>
+  <div id="result" class="result hidden"></div>
+</div></div>
+<script>
+const backend=(()=>{const h=location.hostname;return(!h||h==='localhost'||h==='127.0.0.1')?'http://localhost:5000':`http://${h}:5000`;})();
+const $=id=>document.getElementById(id);
+$('run').onclick=async()=>{const id=$('caseId').value.trim();if(!id){$('status').textContent='Case ID required.';return}$('run').disabled=true;$('status').textContent='Comparative research, cross-case matching and RTI gap analysis चल रहा है...';try{const r=await fetch(`${backend}/api/case/${encodeURIComponent(id)}/complete-evidence-plan`,{method:'POST',headers:{Accept:'application/json'}});const d=await r.json();if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);$('status').textContent=`✅ Final evidence plan ready · ${d.rti.totalRequests} RTI request items · readiness ${d.rti.readinessScore}%`;const s=d.crossCase||{};$('stats').classList.remove('hidden');$('stats').innerHTML=`<div class="box"><b>Cross-case matches</b><span>${s.matches?.length||0}</span></div><div class="box"><b>Graph nodes</b><span>${s.stats?.nodes||0}</span></div><div class="box"><b>Graph edges</b><span>${s.stats?.edges||0}</span></div><div class="box"><b>RTI drafts</b><span>${d.rti.totalRequests}</span></div><div class="box"><b>Readiness</b><span>${d.rti.readinessScore}%</span></div>`;$('links').innerHTML=`<a href="${d.reports.rtiPdf}" target="_blank">📄 RTI Bundle PDF</a><a href="${d.reports.rtiJson}" target="_blank">🧾 RTI JSON</a><a href="${d.reports.crossCaseGraph}" target="_blank">🕸️ Cross-case Graph</a><a href="${d.reports.case}" target="_blank">📁 Case JSON</a>`;$('result').classList.remove('hidden');$('result').textContent=JSON.stringify({crossCase:d.crossCase,rti:{readinessScore:d.rti.readinessScore,totalRequests:d.rti.totalRequests,drafts:d.rti.drafts?.map(x=>({authority:x.authority.label,count:x.drafts.length}))}},null,2)}catch(e){$('status').textContent=`❌ ${e.message}`}finally{$('run').disabled=false}};
+</script>
+</body>
+</html>
