@@ -564,7 +564,7 @@
                     setStatus('AI विश्लेषण…', 'loading');
                     captureBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI सोच रहा…';
 
-                    // 2. Call backend
+                    // 2. Call backend (PORT 501)
                     const BACKEND_URL = 'http://localhost:501/api/start-investigation';
                     const response = await fetch(BACKEND_URL, {
                         method: 'POST',

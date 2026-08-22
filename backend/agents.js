@@ -51,9 +51,9 @@ async function getLocationDetails(lat, lon) {
   }
 }
 
-// ---------- 3. Tender Search (Mock) ----------
+// ---------- 3. Tender Search (Mock – Real API से Replace करें) ----------
 async function searchTenders(location) {
-  // Mock data – in real, call https://api.bidrove.in/tenders
+  // Mock data – real के लिए Bidrove MCP API integrate करें
   return [
     {
       id: 'GEM/2024/B/001',
