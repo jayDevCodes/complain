@@ -7,7 +7,7 @@ const { researchLocation } = require('./research-engine');
 const { generateEvidencePDF, REPORT_DIR } = require('./pdf-report');
 const { runComparativeResearch } = require('./comparative-engine');
 const { generateComparativePDF } = require('./comparative-pdf-report');
-const { ensureGraph, ingestSources, mergeGraph, graphStats } = require('./evidence-graph');
+const { ensureGraph, ingestSources, mergeGraph, graphStats, entity } = require('./evidence-graph');
 const { buildCrossCaseGraph } = require('./cross-case-graph');
 const { buildFinalEvidencePlan } = require('./evidence-completion');
 
@@ -96,8 +96,8 @@ async function runCrossCaseIntelligence(investigationId) {
   const globalGraph = buildCrossCaseGraph(CASE_DIR);
   const p = path.join(CASE_DIR, 'cross-case-graph.json');
   fs.writeFileSync(p, JSON.stringify(globalGraph, null, 2));
-  const caseId = loaded.data.investigationId || investigationId;
-  const matches = (globalGraph.matches || []).filter(m => m.caseA.includes(caseId) || m.caseB.includes(caseId));
+  const caseNodeId = entity('CASE', loaded.data.investigationId || investigationId, loaded.data.title || loaded.data.investigationId || investigationId).id;
+  const matches = (globalGraph.matches || []).filter(m => m.caseA === caseNodeId || m.caseB === caseNodeId);
   return { investigationId, matches, graph: globalGraph, path: p };
 }
 
