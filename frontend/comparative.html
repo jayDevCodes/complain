@@ -49,7 +49,7 @@
 
 <script>
 'use strict';
-const backend = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || !location.hostname) ? 'http://localhost:5000' : `http://${location.hostname}:5000`;
+const backend = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || !location.hostname) ? 'http://localhost:5001' : `http://${location.hostname}:5001`;
 const $ = id => document.getElementById(id);
 function setStatus(text, mode='normal'){ $('status').textContent=text; $('status').style.borderColor = mode==='error' ? '#7f1d1d' : mode==='success' ? '#14532d' : '#1e293b'; }
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }

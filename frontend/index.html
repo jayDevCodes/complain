@@ -504,11 +504,11 @@ function getBackendURL() {
         hostname === "127.0.0.1" ||
         hostname === ""
     ) {
-        return "http://localhost:5000";
+        return "http://localhost:5001";
     }
 
     // Phone / another device on same Wi-Fi
-    return `http://${hostname}:5000`;
+    return `http://${hostname}:5001`;
 }
 
 const BACKEND_URL =
