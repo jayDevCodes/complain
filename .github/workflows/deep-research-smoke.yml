@@ -42,3 +42,7 @@ jobs:
       - name: Deep research full smoke
         working-directory: backend
         run: node demo-smoke.js
+
+      - name: Generated-data cleanup smoke
+        working-directory: backend
+        run: node cleanup-smoke.js
