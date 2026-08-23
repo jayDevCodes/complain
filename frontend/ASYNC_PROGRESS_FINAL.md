@@ -1,0 +1,1 @@
+Async investigation progress is served from /api/investigation-jobs/:jobId.
