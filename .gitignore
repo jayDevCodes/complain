@@ -1,5 +1,17 @@
-backend/.env
-backend/.env
-.env
+# Dependencies
 node_modules/
-*.pdf
+backend/node_modules/
+frontend/node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+backend/.env
+
+# Runtime logs and temporary files
+*.log
+*.pid
+.DS_Store
+coverage/
+.tmp/
