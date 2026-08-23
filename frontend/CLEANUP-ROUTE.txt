@@ -1,0 +1,1 @@
+Open /app/cleanup.html for the safe generated-data reset screen. It previews generated file count/size, requires explicit confirmation, and clears only runtime generated contents under backend/cases and backend/reports.
