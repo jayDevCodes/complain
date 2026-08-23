@@ -17,12 +17,18 @@ const { buildFinalEvidencePlan } = require('./evidence-completion');
 const CASE_DIR = path.join(__dirname, 'cases');
 if (!fs.existsSync(CASE_DIR)) fs.mkdirSync(CASE_DIR, { recursive: true });
 
+const LOCATION_TIMEOUT_MS = Number(process.env.LOCATION_PROVIDER_TIMEOUT_MS || 12000);
+
 async function getLocationDetails(latitude, longitude) {
   const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}&zoom=18&addressdetails=1`;
-  const response = await fetch(url, { headers: { 'User-Agent': 'GovernmentWorkInvestigationAI/7.0' } });
-  if (!response.ok) throw new Error(`Location service failed: HTTP ${response.status}`);
-  const data = await response.json(); const a = data.address || {};
-  return { latitude, longitude, display_name: data.display_name || null, village: a.village || a.hamlet || a.suburb || null, town: a.town || a.city || a.municipality || null, district: a.county || a.state_district || null, state: a.state || null, country: a.country || null, pincode: a.postcode || null, raw: data };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`Location service timed out after ${LOCATION_TIMEOUT_MS}ms`)), LOCATION_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'GovernmentWorkInvestigationAI/7.0' } });
+    if (!response.ok) throw new Error(`Location service failed: HTTP ${response.status}`);
+    const data = await response.json(); const a = data.address || {};
+    return { latitude, longitude, display_name: data.display_name || null, village: a.village || a.hamlet || a.suburb || null, town: a.town || a.city || a.municipality || null, district: a.county || a.state_district || null, state: a.state || null, country: a.country || null, pincode: a.postcode || null, raw: data };
+  } finally { clearTimeout(timer); }
 }
 
 function savePhoto(photo, investigationId) {
