@@ -8,17 +8,20 @@ const {
 
 async function runFullInvestigation(input, onStage = () => {}) {
   const stages = [];
+  let investigationId = null;
 
   const execute = async (name, fn) => {
     const startedAt = new Date().toISOString();
     onStage({ name, status: 'running', startedAt });
     try {
       const result = await fn();
+      if (result?.investigationId) investigationId = result.investigationId;
       const stage = { name, status: 'success', startedAt, finishedAt: new Date().toISOString() };
       stages.push(stage);
       onStage(stage);
       return result;
     } catch (error) {
+      if (investigationId && !error.investigationId) error.investigationId = investigationId;
       const stage = {
         name,
         status: 'error',
@@ -33,7 +36,7 @@ async function runFullInvestigation(input, onStage = () => {}) {
   };
 
   const base = await execute('base-investigation', () => runInvestigation(input));
-  const investigationId = base.investigationId;
+  investigationId = base.investigationId;
 
   const comparative = await execute('comparative-research', () => runComparativeInvestigation(investigationId));
   const crossCase = await execute('cross-case-intelligence', () => runCrossCaseIntelligence(investigationId));
