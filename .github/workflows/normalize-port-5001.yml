@@ -1,0 +1,52 @@
+name: Normalize backend port to 5001
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-port:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace tracked 5000 references
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(git grep -Il '5000' -- ':!backend/node_modules/**' ':!.git/**' || true)
+          if [ -n "$files" ]; then
+            while IFS= read -r file; do
+              sed -i 's/5000/5001/g' "$file"
+            done <<< "$files"
+          fi
+
+      - name: Verify no tracked 5000 references remain
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -n '5000' -- ':!backend/node_modules/**' ':!.git/**'; then
+            echo 'Tracked 5000 reference(s) remain.'
+            exit 1
+          fi
+
+      - name: Commit normalized files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'No additional 5000 references found.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: normalize repo port to 5001'
+          git push
