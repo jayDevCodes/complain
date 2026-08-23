@@ -1,0 +1,1 @@
+Async progress and timeout hardening is implemented in full-pipeline.js, app.js, ai-orchestrator.js and research-engine.js.
