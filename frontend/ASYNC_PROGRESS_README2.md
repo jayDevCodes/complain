@@ -1,1 +1,0 @@
-Live progress is provided by the asynchronous investigation job API.
