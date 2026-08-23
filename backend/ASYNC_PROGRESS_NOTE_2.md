@@ -1,0 +1,1 @@
+Live stage polling endpoint is /api/investigation-jobs/:jobId.
