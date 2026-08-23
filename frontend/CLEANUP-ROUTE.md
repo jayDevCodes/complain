@@ -1,0 +1,1 @@
+Open `/app/cleanup.html` for the safe generated-data reset screen. It previews storage usage, requires explicit confirmation, and only clears generated runtime contents from `cases/` and `reports/`.

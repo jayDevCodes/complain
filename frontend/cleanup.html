@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cleanup Generated Data</title>
+<style>
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:#f8fafc;color:#0f172a}.wrap{max-width:760px;margin:50px auto;padding:20px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:28px;box-shadow:0 16px 45px #0f172a14}h1{margin:0 0 8px}.muted{color:#64748b;line-height:1.55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px}.stat b{display:block;font-size:12px;color:#64748b}.stat span{display:block;font-size:20px;font-weight:800;margin-top:4px}.warning{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px;color:#9a3412}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}.primary{background:#0f172a;color:#fff}.danger{background:#dc2626;color:#fff}.secondary{background:#e2e8f0;color:#0f172a}.status{margin-top:16px;padding:13px;border-radius:12px;background:#f1f5f9}.success{background:#dcfce7;color:#166534}.error{background:#fee2e2;color:#991b1b}.hidden{display:none}@media(max-width:600px){.stats{grid-template-columns:1fr}.wrap{margin:15px auto}}
+</style></head>
+<body><div class="wrap"><div class="card">
+<h1>🧹 Delete Old Data</h1>
+<p class="muted">This tool resets only generated investigation data. Repository source code, frontend files, workflows and configuration are not touched.</p>
+<div class="warning"><strong>What will be deleted:</strong> generated case JSON/photos/graphs/ledgers, generated PDFs and other files under the runtime <code>cases/</code> and <code>reports/</code> directories.</div>
+<div id="stats" class="stats"></div>
+<div class="actions"><button class="primary" id="refresh">Refresh data status</button><button class="danger" id="delete">Delete Old Data</button><a class="secondary" style="text-decoration:none" href="/">Back to investigation</a></div>
+<div id="status" class="status">Checking generated data...</div>
+</div></div>
+<script>
+'use strict';
+const backend=location.protocol==='file:'?'http://localhost:5001':location.origin;
+const $=id=>document.getElementById(id);let busy=false;
+function fmtBytes(n){if(!n)return'0 B';const u=['B','KB','MB','GB'];let i=0,x=n;while(x>=1024&&i<u.length-1){x/=1024;i++}return`${x.toFixed(i?1:0)} ${u[i]}`}
+function setStatus(t,c=''){$('status').textContent=t;$('status').className='status '+c}
+async function loadStatus(){try{const r=await fetch(`${backend}/api/data-status`);const d=await r.json();if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);$('stats').innerHTML=[['Generated files',d.files],['Storage used',fmtBytes(d.bytes)],['Cases files',d.directories.find(x=>x.key==='cases')?.files||0],['Report files',d.directories.find(x=>x.key==='reports')?.files||0],['Code preserved',d.codeAndConfigPreserved?'Yes':'No'],['Generated-data scope',d.generatedDataOnly?'Only':'Unknown']].map(([k,v])=>`<div class="stat"><b>${k}</b><span>${v}</span></div>`).join('');setStatus(d.files?`⚠ ${d.files} generated files are currently stored.`:'✅ No generated data is currently stored.','')}catch(e){setStatus(`❌ ${e.message}`,'error')}}
+async function purge(){if(busy)return;busy=true;$('delete').disabled=true;try{const pre=await fetch(`${backend}/api/data-status`).then(r=>r.json());const files=pre.files||0;const size=fmtBytes(pre.bytes||0);if(!files){setStatus('✅ Nothing to delete.','success');return}const first=window.confirm(`Delete ALL ${files} generated files (${size})?\n\nOnly runtime cases/reports data will be removed.`);if(!first)return;const typed=window.prompt('Type DELETE to confirm permanent cleanup:');if(typed!=='DELETE'){setStatus('Cleanup cancelled.','');return}setStatus('🧹 Deleting generated data...','');const r=await fetch(`${backend}/api/cleanup-old-data`,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:true})});const d=await r.json();if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);setStatus(`✅ Cleanup complete. Removed ${d.before.files} files (${fmtBytes(d.before.bytes)}).`,'success');await loadStatus()}catch(e){setStatus(`❌ ${e.message}`,'error')}finally{busy=false;$('delete').disabled=false}}
+$('refresh').onclick=loadStatus;$('delete').onclick=purge;loadStatus();
+</script></body></html>
