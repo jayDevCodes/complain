@@ -1,0 +1,1 @@
+Cinematic command-center UI is the primary investigation runner interface.

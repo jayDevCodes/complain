@@ -1,0 +1,1 @@
+Command-center UI redesign: cinematic dark glass interface, animated sensor HUD, live investigation pipeline, telemetry cards, report vault and safe reset modal.

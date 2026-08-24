@@ -1,0 +1,1 @@
+The runner uses a cinematic command-center interface with glass panels, animated HUD and live investigation stages.

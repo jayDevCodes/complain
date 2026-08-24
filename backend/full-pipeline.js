@@ -1,4 +1,8 @@
+const crypto = require('crypto');
 const { runInvestigation, runComparativeInvestigation, runCrossCaseIntelligence, runFinalEvidencePlan, loadCase } = require('./agents');
+
+const JOBS = new Map();
+const JOB_TTL_MS = Number(process.env.INVESTIGATION_JOB_TTL_MS || 6 * 60 * 60 * 1000);
 
 async function runFullInvestigation(input, onStage = () => {}) {
   const stages = [];
@@ -36,4 +40,31 @@ async function runFullInvestigation(input, onStage = () => {}) {
     case: { version: finalCase.version, gaps: finalCase.gaps || [], reportCount: Object.values(finalCase.reports || {}).filter(Boolean).length }
   };
 }
-module.exports = { runFullInvestigation };
+
+function cleanupJobs() {
+  const cutoff = Date.now() - JOB_TTL_MS;
+  for (const [id, job] of JOBS) if (new Date(job.updatedAt || job.createdAt).getTime() < cutoff) JOBS.delete(id);
+}
+
+function startFullInvestigationJob(input) {
+  cleanupJobs();
+  const jobId = crypto.randomUUID();
+  const job = { jobId, status: 'running', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), stages: [], investigationId: null, result: null, error: null };
+  JOBS.set(jobId, job);
+  setImmediate(async () => {
+    try {
+      const result = await runFullInvestigation(input, stage => { job.stages = [...job.stages, stage]; job.updatedAt = new Date().toISOString(); if (stage.status === 'running' && stage.name) job.currentStage = stage.name; });
+      job.status = 'success'; job.result = result; job.investigationId = result.investigationId; job.updatedAt = new Date().toISOString();
+    } catch (error) {
+      job.status = 'error'; job.error = error.message || String(error); job.investigationId = error.investigationId || job.investigationId; job.updatedAt = new Date().toISOString();
+    }
+  });
+  return { jobId, status: job.status, createdAt: job.createdAt };
+}
+
+function getFullInvestigationJob(jobId) {
+  cleanupJobs();
+  return JOBS.get(jobId) || null;
+}
+
+module.exports = { runFullInvestigation, startFullInvestigationJob, getFullInvestigationJob };

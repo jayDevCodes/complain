@@ -1,0 +1,1 @@
+Command center UI: cinematic dark glass panels, animated sensor HUD, live investigation pipeline, telemetry and report vault.

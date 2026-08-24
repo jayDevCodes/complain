@@ -1,15 +1,24 @@
 require('dotenv').config();
 const { source } = require('./investigation-schema');
 
+const SEARCH_TIMEOUT_MS = Number(process.env.SEARCH_PROVIDER_TIMEOUT_MS || 20000);
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = SEARCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`Search request timed out after ${timeoutMs}ms`)), timeoutMs);
+  try { return await fetch(url, { ...options, signal: controller.signal }); }
+  finally { clearTimeout(timer); }
+}
+
 async function searchWeb(query, limit = 8) {
   if (process.env.TAVILY_API_KEY) {
-    const r = await fetch('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: process.env.TAVILY_API_KEY, query, search_depth: 'advanced', max_results: limit, include_answer: false }) });
+    const r = await fetchWithTimeout('https://api.tavily.com/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_key: process.env.TAVILY_API_KEY, query, search_depth: 'advanced', max_results: limit, include_answer: false }) });
     if (!r.ok) throw new Error(`Tavily HTTP ${r.status}`);
     const d = await r.json();
     return (d.results || []).map(x => source(x.url, x.title || '', new URL(x.url).hostname, 'web', x.content || ''));
   }
   if (process.env.SERPER_API_KEY) {
-    const r = await fetch('https://google.serper.dev/search', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-KEY': process.env.SERPER_API_KEY }, body: JSON.stringify({ q: query, num: limit }) });
+    const r = await fetchWithTimeout('https://google.serper.dev/search', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-API-KEY': process.env.SERPER_API_KEY }, body: JSON.stringify({ q: query, num: limit }) });
     if (!r.ok) throw new Error(`Serper HTTP ${r.status}`);
     const d = await r.json();
     return (d.organic || []).map(x => source(x.link, x.title || '', new URL(x.link).hostname, 'web', x.snippet || ''));
