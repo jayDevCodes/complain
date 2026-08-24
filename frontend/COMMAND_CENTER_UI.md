@@ -1,1 +1,0 @@
-The runner UI is intentionally designed as a cinematic command center: dark glass panels, animated scan lines, live stage telemetry, compact controls and safe reset modal.
