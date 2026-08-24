@@ -1,1 +1,0 @@
-Animated command-center UI design: glass panels, scanning camera HUD, live pipeline states, compact controls, safe reset modal, telemetry and report vault.
