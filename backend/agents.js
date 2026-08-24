@@ -119,9 +119,11 @@ async function runInvestigation({ latitude, longitude, timestamp, tenderId, phot
   graph = ingestSources(graph, baseReport, allSources);
   const graphPath = saveGraph(investigationId, graph);
   baseReport.graph = { stats: graphStats(graph), path: graphPath };
-  const casePath = safeCaseWrite(investigationId, baseReport);
   const pdfPath = await generateEvidencePDF(baseReport);
-  return { status: 'success', investigationId, version: 1, capture, location, objectIdentification, tender, comparison, execution, modelReview, sources: allSources, deepResearch, evidenceLedger: ledger, graph: { stats: graphStats(graph), path: graphPath }, gaps, researchQueries: research.queries, reports: { pdf: pdfPath, case: casePath, graph: graphPath, evidenceLedger: ledgerPath } };
+  const casePath = path.join(CASE_DIR, `${investigationId}.json`);
+  baseReport.reports = { pdf: pdfPath, case: casePath, graph: graphPath, evidenceLedger: ledgerPath };
+  safeCaseWrite(investigationId, baseReport);
+  return { status: 'success', investigationId, version: 1, capture, location, objectIdentification, tender, comparison, execution, modelReview, sources: allSources, deepResearch, evidenceLedger: ledger, graph: { stats: graphStats(graph), path: graphPath }, gaps, researchQueries: research.queries, reports: baseReport.reports };
 }
 
 async function runComparativeInvestigation(investigationId) {

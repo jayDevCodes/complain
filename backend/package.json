@@ -6,7 +6,9 @@
   "type": "commonjs",
   "scripts": {
     "start": "node --require ./response-timeout-guard.js app.js",
-    "dev": "nodemon --require ./response-timeout-guard.js app.js"
+    "dev": "nodemon --require ./response-timeout-guard.js app.js",
+    "check": "node --check app.js && node --check ai-orchestrator.js",
+    "test:smoke": "node startup-smoke.js && node timeout-smoke.js && node async-smoke.js && node demo-smoke.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
