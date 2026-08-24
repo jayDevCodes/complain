@@ -28,11 +28,16 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = MODEL_TIMEOUT_MS)
   finally { clearTimeout(timer); }
 }
 
+function stripTrailingSlash(value) {
+  const text = String(value || '');
+  return text.endsWith('/') ? text.slice(0, -1) : text;
+}
+
 async function callOpenAICompatible(config, prompt, imageDataUrl) {
   if (!process.env[config.key]) return { provider: config.name, status: 'not_configured' };
   const content = [{ type: 'text', text: prompt }];
   if (imageDataUrl) content.push({ type: 'image_url', image_url: { url: imageDataUrl, detail: 'high' } });
-  const response = await fetchWithTimeout(`${config.base.replace(/\/$/, '')}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env[config.key]}` }, body: JSON.stringify({ model: config.model, temperature: 0.1, messages: [{ role: 'system', content: 'Return strict JSON where possible. Be conservative with claims and tolerant of normal field-photo orientation/perspective.' }, { role: 'user', content }], response_format: { type: 'json_object' } }) });
+  const response = await fetchWithTimeout(`${stripTrailingSlash(config.base)}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env[config.key]}` }, body: JSON.stringify({ model: config.model, temperature: 0.1, messages: [{ role: 'system', content: 'Return strict JSON where possible. Be conservative with claims and tolerant of normal field-photo orientation/perspective.' }, { role: 'user', content }], response_format: { type: 'json_object' } }) });
   const text = await response.text();
   if (!response.ok) throw new Error(`${config.name} HTTP ${response.status}: ${text.slice(0, 500)}`);
   const data = JSON.parse(text);
@@ -42,9 +47,10 @@ async function callOpenAICompatible(config, prompt, imageDataUrl) {
 async function callAnthropic(config, prompt, imageDataUrl) {
   if (!process.env[config.key]) return { provider: config.name, status: 'not_configured' };
   const content = [{ type: 'text', text: prompt }];
-  const m = imageDataUrl?.match(/^data:image\/(png|jpe?g|webp);base64,(.+)$/i);
+  const imagePattern = new RegExp('^data:image/(png|jpe?g|webp);base64,(.+)$', 'i');
+  const m = imageDataUrl?.match(imagePattern);
   if (m) content.unshift({ type: 'image', source: { type: 'base64', media_type: `image/${m[1].toLowerCase() === 'jpg' ? 'jpeg' : m[1].toLowerCase()}`, data: m[2] } });
-  const response = await fetchWithTimeout(`${config.base.replace(/\/$/, '')}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': process.env[config.key], 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: config.model, max_tokens: 4096, temperature: 0.1, system: 'Return strict JSON where possible. Be conservative with claims and tolerant of normal field-photo orientation/perspective.', messages: [{ role: 'user', content }] }) });
+  const response = await fetchWithTimeout(`${stripTrailingSlash(config.base)}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': process.env[config.key], 'anthropic-version': '2023-06-01' }, body: JSON.stringify({ model: config.model, max_tokens: 4096, temperature: 0.1, system: 'Return strict JSON where possible. Be conservative with claims and tolerant of normal field-photo orientation/perspective.', messages: [{ role: 'user', content }] }) });
   const text = await response.text();
   if (!response.ok) throw new Error(`${config.name} HTTP ${response.status}: ${text.slice(0, 500)}`);
   const data = JSON.parse(text);
