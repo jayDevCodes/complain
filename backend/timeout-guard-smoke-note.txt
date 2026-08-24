@@ -1,0 +1,1 @@
+Timeout regression smoke is part of CI and locally reproduced: response headers can arrive before a hanging response body. The global guard now covers the complete fetch lifecycle.
