@@ -1,12 +1,12 @@
 {
   "name": "government-work-investigation-ai",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "AI assisted government work field investigation system",
   "main": "app.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node --require ./response-timeout-guard.js app.js",
+    "dev": "nodemon --require ./response-timeout-guard.js app.js"
   },
   "dependencies": {
     "cors": "^2.8.6",
