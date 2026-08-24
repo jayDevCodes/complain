@@ -13,6 +13,7 @@ env:
   DEEP_RESEARCH_ROUNDS: 2
   DEEP_RESEARCH_RESULTS_PER_QUERY: 4
   DEEP_RESEARCH_MAX_QUERIES_PER_ROUND: 12
+  GLOBAL_FETCH_TIMEOUT_MS: 60000
 
 jobs:
   deep-research-smoke:
@@ -38,6 +39,18 @@ jobs:
         run: |
           set -euo pipefail
           find . -maxdepth 1 -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Backend startup and health smoke
+        working-directory: backend
+        run: node --require ./response-timeout-guard.js startup-smoke.js
+
+      - name: Outbound response-timeout regression smoke
+        working-directory: backend
+        run: node --require ./response-timeout-guard.js timeout-smoke.js
+
+      - name: Async investigation smoke
+        working-directory: backend
+        run: node async-smoke.js
 
       - name: Deep research full smoke
         working-directory: backend
