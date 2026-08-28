@@ -1,0 +1,1 @@
+Contact email verified against the supplied resume: jaydev787748@gmail.com. The site contact runtime also normalizes the legacy incorrect email to the verified address.
